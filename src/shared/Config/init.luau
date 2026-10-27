@@ -25,6 +25,21 @@ Config.Enemy = {
 	SpawnInterval = 0.5, -- s entre spawns
 	MaxAlive = 100, -- teto de inimigos vivos (performance)
 	PoolSize = 120, -- parts pre-criadas para reaproveitar
+	FlashColor = Color3.fromRGB(255, 255, 255), -- cor do "pisca" ao levar dano
+	FlashTime = 0.08, -- s que o pisca dura
+}
+
+-- Arma automatica: mira no inimigo mais proximo e atira sozinha.
+Config.Weapon = {
+	Damage = 2,
+	FireInterval = 0.35, -- s entre tiros
+	Range = 40, -- so mira em inimigos dentro deste alcance
+	ProjectileSpeed = 60, -- studs/s
+	ProjectileSize = Vector3.new(0.6, 0.6, 0.6),
+	ProjectileColor = Color3.fromRGB(255, 240, 120),
+	HitRadius = 1.8, -- distancia do alvo para contar acerto
+	Lifetime = 2, -- s ate o projetil se recolher se nao acertar
+	PoolSize = 200,
 }
 
 -- Gemas de XP que os inimigos soltam ao morrer.

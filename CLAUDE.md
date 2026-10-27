@@ -38,7 +38,7 @@ src/
 ## Roteiro (fazer UM passo por vez, testar antes de seguir)
 - [x] 1. Projeto Rojo funcionando + jogador se movendo + câmera de cima
 - [x] 2. Inimigos: spawn em volta do jogador, perseguem, morrem, soltam XP
-- [ ] 3. Arma automática: mira no inimigo mais próximo e ataca sozinha
+- [x] 3. Arma automática: mira no inimigo mais próximo e ataca sozinha
 - [ ] 4. XP + level up com tela de escolha de 3 upgrades
 - [ ] 5. Ondas, dificuldade crescente e chefe
 - [ ] 6. Meta-progressão: moedas entre partidas, upgrades permanentes, DataStore

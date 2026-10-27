@@ -13,6 +13,7 @@ type EnemyData = {
 	part: Part,
 	health: number,
 	lastHit: number, -- os.clock do ultimo dano causado no jogador
+	flashUntil: number, -- os.clock ate quando o inimigo fica "piscado"
 }
 
 local enemiesFolder: Folder
@@ -55,9 +56,24 @@ function EnemyService.spawnAround(root: BasePart)
 	local r = Config.Enemy.SpawnRadius
 	local base = root.Position
 	part.Position = Vector3.new(base.X + math.cos(angle) * r, base.Y, base.Z + math.sin(angle) * r)
+	part.Color = Config.Enemy.Color -- limpa um possivel "pisca" deixado pela vida anterior
 	part.Parent = enemiesFolder
-	active[part] = { part = part, health = Config.Enemy.Health, lastHit = 0 }
+	active[part] = { part = part, health = Config.Enemy.Health, lastHit = 0, flashUntil = 0 }
 	activeCount += 1
+end
+
+-- Inimigo vivo mais proximo de uma posicao, dentro de maxRange (nil se nenhum).
+function EnemyService.nearestEnemy(pos: Vector3, maxRange: number): Part?
+	local best: Part? = nil
+	local bestDist = maxRange
+	for part in active do
+		local d = (part.Position - pos).Magnitude
+		if d <= bestDist then
+			best = part
+			bestDist = d
+		end
+	end
+	return best
 end
 
 -- true se o instance for um inimigo vivo (usado para validar o clique do cliente).
@@ -78,16 +94,21 @@ function EnemyService.kill(part: Part)
 	XpService.dropGem(pos)
 end
 
--- Aplica dano; mata e solta XP se a vida zerar. Reaproveitado pela arma no passo 3.
-function EnemyService.damage(part: Part, amount: number)
+-- Aplica dano; mata e solta XP se a vida zerar. Devolve true se matou.
+function EnemyService.damage(part: Part, amount: number): boolean
 	local data = active[part]
 	if not data then
-		return
+		return false
 	end
 	data.health -= amount
 	if data.health <= 0 then
 		EnemyService.kill(part)
+		return true
 	end
+	-- sobreviveu: pisca para dar feedback de acerto
+	data.flashUntil = os.clock() + Config.Enemy.FlashTime
+	part.Color = Config.Enemy.FlashColor
+	return false
 end
 
 -- Loop central: spawn por tempo + mover todos + dano por contato.
@@ -118,6 +139,12 @@ function EnemyService.update(dt: number)
 			local newPos = part.Position + dir * step
 			-- mantem o inimigo no mesmo nivel do jogador
 			part.Position = Vector3.new(newPos.X, targetRoot.Position.Y, newPos.Z)
+		end
+
+		-- fim do pisca: volta a cor normal
+		if data.flashUntil > 0 and now >= data.flashUntil then
+			data.flashUntil = 0
+			part.Color = Config.Enemy.Color
 		end
 
 		if (targetRoot.Position - part.Position).Magnitude <= Config.Enemy.ContactRange then
