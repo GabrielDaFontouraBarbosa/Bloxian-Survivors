@@ -51,4 +51,4 @@ src/
 - Se tiver dúvida de API do Roblox, diga que não tem certeza em vez de inventar.
 - Em sessão nova, leia primeiro o CONTEXTO.md (estado atual e decisões) e atualize a seção 3 dele ao fim de cada passo.
 - Para delegar pesquisa, revisão e playtest e economizar tokens, siga o AGENTES.md.
-- Ao mexer em progressão, recompensas, level up, meta-progressão ou analytics, leia também o RETENCAO.md.
+- Regras de retenção (progressão, recompensas, level up, meta-progressão, analytics): a skill `retention` carrega sozinha quando o assunto aparece.
