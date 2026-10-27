@@ -36,7 +36,7 @@ src/
 - Nunca confiar em dados vindos do cliente sem validar
 
 ## Roteiro (fazer UM passo por vez, testar antes de seguir)
-- [ ] 1. Projeto Rojo funcionando + jogador se movendo + câmera de cima
+- [x] 1. Projeto Rojo funcionando + jogador se movendo + câmera de cima
 - [ ] 2. Inimigos: spawn em volta do jogador, perseguem, morrem, soltam XP
 - [ ] 3. Arma automática: mira no inimigo mais próximo e ataca sozinha
 - [ ] 4. XP + level up com tela de escolha de 3 upgrades

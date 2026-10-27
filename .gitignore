@@ -1,0 +1,9 @@
+# Builds do Rojo e arquivos de lugar do Studio
+/build/
+*.rbxl
+*.rbxlx
+*.rbxl.lock
+*.rbxlx.lock
+
+# Sourcemap gerado pelo Rojo
+sourcemap.json

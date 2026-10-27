@@ -1,0 +1,4 @@
+# Rokit: gerenciador de ferramentas (instala e fixa a versao do Rojo).
+# Confirme/atualize a versao com: rokit add rojo-rbx/rojo
+[tools]
+rojo = "rojo-rbx/rojo@7.5.1"
