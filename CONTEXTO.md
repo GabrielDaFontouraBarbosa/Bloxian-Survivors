@@ -19,8 +19,8 @@ Jogo no Roblox estilo Vampire Survivors ("bullet heaven"): o jogador só se move
 
 ## 3. Estado atual (atualizar a cada passo)
 - Data da última atualização: 2026-10-27
-- Roteiro: passo 1 concluído (projeto Rojo + câmera de cima). Próximo: passo 2 (inimigos).
-- Código do jogo escrito: estrutura Rojo em src/ (server/client/shared), Config inicial e câmera top-down.
+- Roteiro: passos 1 e 2 concluídos. Próximo: passo 3 (arma automática).
+- Código do jogo escrito: câmera top-down; EnemyService (spawn/perseguição/contato), XpService (gemas+XP), Remotes, PlayerUtil, Analytics (hook 1ª morte, não verificado); HUD de XP e clique-pra-matar temporário (sai no passo 3).
 - Documentação existente: CLAUDE.md, RETENCAO.md, AGENTES.md, CONTEXTO.md.
 - Agentes e skills do projeto: criados (4 agentes; skills retention e novo-sistema).
 - Repo: GabrielDaFontouraBarbosa/Bloxian-Survivors (branch main).
