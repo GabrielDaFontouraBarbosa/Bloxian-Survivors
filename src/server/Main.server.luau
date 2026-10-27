@@ -3,12 +3,14 @@
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local PlayerStats = require(script.Parent.PlayerStats)
 local EnemyService = require(script.Parent.EnemyService)
 local XpService = require(script.Parent.XpService)
 local WeaponService = require(script.Parent.WeaponService)
 
-print("[Survivors] Servidor iniciado (passo 3: arma automatica mira e atira sozinha).")
+print("[Survivors] Servidor iniciado (passo 4: XP, level up e escolha de 3 upgrades).")
 
+PlayerStats.init()
 XpService.init()
 EnemyService.init()
 WeaponService.init()

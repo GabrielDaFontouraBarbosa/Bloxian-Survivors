@@ -19,8 +19,9 @@ Jogo no Roblox estilo Vampire Survivors ("bullet heaven"): o jogador só se move
 
 ## 3. Estado atual (atualizar a cada passo)
 - Data da última atualização: 2026-10-27
-- Roteiro: passos 1 a 3 concluídos. Próximo: passo 4 (XP + level up com escolha de 3 upgrades).
-- Código do jogo escrito: câmera top-down; EnemyService (spawn/perseguição/contato/flash), WeaponService (mira+projéteis com pool), XpService (gemas+XP), Remotes, PlayerUtil, Analytics; HUD de XP. Clique-pra-matar removido (a arma mata agora).
+- Roteiro: passos 1 a 4 concluídos. Próximo: passo 5 (ondas, dificuldade crescente e chefe).
+- Código do jogo escrito: câmera top-down; EnemyService, WeaponService, XpService (gemas+XP+nível+upgrades), PlayerStats (stats por jogador), Remotes, PlayerUtil, Analytics; HUD com barra de XP/nível e painel de escolha de 3 upgrades.
+- Upgrades disponíveis (Config.Upgrades): dano, cadência, velocidade, vida, ímã.
 - Documentação existente: CLAUDE.md, RETENCAO.md, AGENTES.md, CONTEXTO.md.
 - Agentes e skills do projeto: criados (4 agentes; skills retention e novo-sistema).
 - Repo: GabrielDaFontouraBarbosa/Bloxian-Survivors (branch main).

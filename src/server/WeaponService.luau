@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local EnemyService = require(script.Parent.EnemyService)
+local PlayerStats = require(script.Parent.PlayerStats)
 local Analytics = require(script.Parent.Analytics)
 
 local WeaponService = {}
@@ -78,9 +79,10 @@ function WeaponService.update(dt: number)
 		local char = player.Character
 		local root = char and char:FindFirstChild("HumanoidRootPart")
 		if root and root:IsA("BasePart") then
+			local interval = PlayerStats.get(player).fireInterval
 			fireAccum[player] = (fireAccum[player] or 0) + dt
-			if fireAccum[player] >= Config.Weapon.FireInterval then
-				fireAccum[player] -= Config.Weapon.FireInterval
+			if fireAccum[player] >= interval then
+				fireAccum[player] -= interval
 				fire(root, player)
 			end
 		end
@@ -97,7 +99,7 @@ function WeaponService.update(dt: number)
 		local to = pr.target.Position - pr.part.Position
 		local dist = to.Magnitude
 		if dist <= Config.Weapon.HitRadius then
-			local killed = EnemyService.damage(pr.target, Config.Weapon.Damage)
+			local killed = EnemyService.damage(pr.target, PlayerStats.get(pr.owner).damage)
 			if killed then
 				Analytics.firstEnemyKill(pr.owner)
 			end

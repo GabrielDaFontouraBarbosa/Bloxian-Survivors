@@ -23,6 +23,29 @@ function Analytics.firstEnemyKill(player: Player)
 	end)
 end
 
+-- Passo 4: cada nivel alcancado.
+function Analytics.levelReached(player: Player, level: number)
+	pcall(function()
+		AnalyticsService:LogProgressionEvent(
+			player,
+			"Run",
+			Enum.AnalyticsProgressionType.Complete,
+			level,
+			"LevelUp"
+		)
+	end)
+end
+
+-- Passo 4: upgrade escolhido no level up (vai como evento economico/custom).
+function Analytics.upgradeChosen(player: Player, level: number, upgradeId: string)
+	pcall(function()
+		AnalyticsService:LogCustomEvent(player, "UpgradeChosen", 1, {
+			level = level,
+			upgrade = upgradeId,
+		})
+	end)
+end
+
 Players.PlayerRemoving:Connect(function(player)
 	firstKillDone[player] = nil
 end)

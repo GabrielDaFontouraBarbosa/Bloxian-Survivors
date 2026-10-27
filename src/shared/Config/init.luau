@@ -53,4 +53,26 @@ Config.Xp = {
 	PoolSize = 300,
 }
 
+-- Stats base do jogador (PlayerStats parte daqui; upgrades sobem a partir disto).
+Config.Player = {
+	WalkSpeed = 16, -- padrao do Roblox
+	MaxHealth = 100,
+}
+
+-- Progressao de nivel. XP para ir do nivel N ao N+1 = round(BaseXp * Growth^(N-1)).
+Config.Progression = {
+	BaseXp = 5, -- primeiro level up vem cedo (~5 gemas)
+	Growth = 1.35, -- cada nivel custa 35% a mais
+	FireIntervalMin = 0.08, -- piso da cadencia (upgrade de firerate nao passa disso)
+}
+
+-- Catalogo de upgrades do level up. So dados; o efeito fica no PlayerStats.
+Config.Upgrades = {
+	{ id = "damage", name = "+Dano", desc = "+1 de dano por tiro", amount = 1 },
+	{ id = "firerate", name = "+Cadencia", desc = "-15% no tempo entre tiros", mult = 0.85 },
+	{ id = "speed", name = "+Velocidade", desc = "+2 de velocidade de corrida", amount = 2 },
+	{ id = "health", name = "+Vida", desc = "+20 de vida maxima (e cura)", amount = 20 },
+	{ id = "magnet", name = "+Iman", desc = "+5 de raio de coleta de XP", amount = 5 },
+}
+
 return Config
