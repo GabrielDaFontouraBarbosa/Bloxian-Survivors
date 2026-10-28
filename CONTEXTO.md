@@ -19,9 +19,10 @@ Jogo no Roblox estilo Vampire Survivors ("bullet heaven"): o jogador só se move
 
 ## 3. Estado atual (atualizar a cada passo)
 - Data da última atualização: 2026-10-27
-- Roteiro: passos 1 a 4 concluídos. Próximo: passo 5 (ondas, dificuldade crescente e chefe).
-- Código do jogo escrito: câmera top-down; EnemyService, WeaponService, XpService (gemas+XP+nível+upgrades), PlayerStats (stats por jogador), Remotes, PlayerUtil, Analytics; HUD com barra de XP/nível e painel de escolha de 3 upgrades.
-- Upgrades disponíveis (Config.Upgrades): dano, cadência, velocidade, vida, ímã.
+- Roteiro: passos 1 a 5 concluídos. Próximo: passo 6 (meta-progressão: moedas, upgrades permanentes, DataStore).
+- Código do jogo escrito: câmera top-down; WaveService (ondas/dificuldade/chefe/morte), EnemyService (stats por inimigo), WeaponService, XpService (XP+nível+upgrades), PlayerStats, Remotes, PlayerUtil, Analytics; HUD com XP/nível, onda, painel de upgrades e aviso de morte.
+- Upgrades (Config.Upgrades): dano, cadência, velocidade, vida, ímã. Curva de ondas em Config.Wave; chefe em Config.Boss (a cada 3 ondas).
+- Pendente de verificação: todas as chamadas de AnalyticsService (em pcall). Reinício de partida de verdade só no passo 6.
 - Documentação existente: CLAUDE.md, RETENCAO.md, AGENTES.md, CONTEXTO.md.
 - Agentes e skills do projeto: criados (4 agentes; skills retention e novo-sistema).
 - Repo: GabrielDaFontouraBarbosa/Bloxian-Survivors (branch main).

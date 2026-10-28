@@ -27,6 +27,29 @@ Config.Enemy = {
 	PoolSize = 120, -- parts pre-criadas para reaproveitar
 	FlashColor = Color3.fromRGB(255, 255, 255), -- cor do "pisca" ao levar dano
 	FlashTime = 0.08, -- s que o pisca dura
+	XpReward = 1, -- gemas soltas ao morrer
+}
+
+-- Chefe: inimigo grande e tanky que aparece a cada N ondas.
+Config.Boss = {
+	Health = 120,
+	Speed = 6,
+	ContactDamage = 20,
+	Size = Vector3.new(6, 6, 6),
+	Color = Color3.fromRGB(140, 20, 160),
+	XpReward = 12, -- solta uma chuva de gemas
+}
+
+-- Ondas e dificuldade crescente. A curva toda mora aqui (retention: tuning).
+Config.Wave = {
+	Duration = 20, -- s por onda
+	BossEveryWaves = 3, -- chefe no inicio de cada 3a onda
+	SpawnIntervalStart = 0.5, -- s entre spawns na onda 1
+	SpawnIntervalStep = 0.04, -- diminui por onda
+	SpawnIntervalMin = 0.12, -- piso
+	HealthStepPerWave = 0.15, -- vida *= 1 + step*(onda-1)
+	SpeedStepPerWave = 0.04, -- velocidade *= 1 + step*(onda-1)
+	SpeedMax = 22, -- teto de velocidade do inimigo
 }
 
 -- Arma automatica: mira no inimigo mais proximo e atira sozinha.

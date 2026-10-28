@@ -7,16 +7,19 @@ local PlayerStats = require(script.Parent.PlayerStats)
 local EnemyService = require(script.Parent.EnemyService)
 local XpService = require(script.Parent.XpService)
 local WeaponService = require(script.Parent.WeaponService)
+local WaveService = require(script.Parent.WaveService)
 
-print("[Survivors] Servidor iniciado (passo 4: XP, level up e escolha de 3 upgrades).")
+print("[Survivors] Servidor iniciado (passo 5: ondas, dificuldade crescente e chefe).")
 
 PlayerStats.init()
 XpService.init()
 EnemyService.init()
 WeaponService.init()
+WaveService.init()
 
--- Loop central: um unico Heartbeat move inimigos, arma e gemas.
+-- Loop central: um unico Heartbeat cuida de ondas, inimigos, arma e gemas.
 RunService.Heartbeat:Connect(function(dt)
+	WaveService.update(dt) -- avanca a onda e spawna (comum + chefe)
 	EnemyService.update(dt) -- inimigos perseguem e batem
 	WeaponService.update(dt) -- arma mira no mais proximo e atira
 	XpService.update(dt) -- gemas voam ate o jogador

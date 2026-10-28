@@ -46,6 +46,16 @@ function Analytics.upgradeChosen(player: Player, level: number, upgradeId: strin
 	end)
 end
 
+-- Passo 5: morte do jogador (onda e tempo de vida da partida).
+function Analytics.runDeath(player: Player, wave: number, elapsed: number)
+	pcall(function()
+		AnalyticsService:LogCustomEvent(player, "RunDeath", 1, {
+			wave = wave,
+			seconds = math.floor(elapsed),
+		})
+	end)
+end
+
 Players.PlayerRemoving:Connect(function(player)
 	firstKillDone[player] = nil
 end)

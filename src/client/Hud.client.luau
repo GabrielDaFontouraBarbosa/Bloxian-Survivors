@@ -11,6 +11,8 @@ local player = Players.LocalPlayer
 local progressChanged = Remotes.event("ProgressChanged")
 local levelUp = Remotes.event("LevelUp")
 local chooseUpgrade = Remotes.event("ChooseUpgrade")
+local waveChanged = Remotes.event("WaveChanged")
+local playerDied = Remotes.event("PlayerDied")
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "SurvivorsHud"
@@ -45,6 +47,42 @@ progressChanged.OnClientEvent:Connect(function(level: number, xp: number, need: 
 	levelLabel.Text = "Nivel " .. tostring(level)
 	local ratio = if need > 0 then math.clamp(xp / need, 0, 1) else 0
 	barFill.Size = UDim2.new(ratio, 0, 1, 0)
+end)
+
+-- Onda atual (canto superior direito)
+local waveLabel = Instance.new("TextLabel")
+waveLabel.Size = UDim2.fromOffset(160, 26)
+waveLabel.Position = UDim2.new(1, -176, 0, 16)
+waveLabel.BackgroundTransparency = 1
+waveLabel.TextXAlignment = Enum.TextXAlignment.Right
+waveLabel.TextColor3 = Color3.new(1, 1, 1)
+waveLabel.TextScaled = true
+waveLabel.Font = Enum.Font.GothamBold
+waveLabel.Text = "Onda 1"
+waveLabel.Parent = gui
+
+waveChanged.OnClientEvent:Connect(function(wave: number)
+	waveLabel.Text = "Onda " .. tostring(wave)
+end)
+
+-- Aviso de morte (some sozinho)
+local deathLabel = Instance.new("TextLabel")
+deathLabel.Size = UDim2.fromOffset(420, 40)
+deathLabel.Position = UDim2.fromScale(0.5, 0.3)
+deathLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+deathLabel.BackgroundTransparency = 1
+deathLabel.TextColor3 = Color3.fromRGB(255, 90, 90)
+deathLabel.TextScaled = true
+deathLabel.Font = Enum.Font.GothamBold
+deathLabel.Visible = false
+deathLabel.Parent = gui
+
+playerDied.OnClientEvent:Connect(function(wave: number, seconds: number)
+	deathLabel.Text = ("Voce caiu na onda %d (%ds)"):format(wave, seconds)
+	deathLabel.Visible = true
+	task.delay(4, function()
+		deathLabel.Visible = false
+	end)
 end)
 
 -- Painel de escolha de upgrade (centro)

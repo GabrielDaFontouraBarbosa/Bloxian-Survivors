@@ -40,7 +40,7 @@ src/
 - [x] 2. Inimigos: spawn em volta do jogador, perseguem, morrem, soltam XP
 - [x] 3. Arma automática: mira no inimigo mais próximo e ataca sozinha
 - [x] 4. XP + level up com tela de escolha de 3 upgrades
-- [ ] 5. Ondas, dificuldade crescente e chefe
+- [x] 5. Ondas, dificuldade crescente e chefe
 - [ ] 6. Meta-progressão: moedas entre partidas, upgrades permanentes, DataStore
 
 ## Como trabalhar comigo
