@@ -18,18 +18,25 @@ Jogo no Roblox estilo Vampire Survivors ("bullet heaven"): o jogador só se move
 | Sessão líder + 3 subagentes baratos | Ver AGENTES.md. Economiza tokens. |
 
 ## 3. Estado atual (atualizar a cada passo)
-- Data da última atualização: 2026-10-27
+- Data da última atualização: 2026-10-28
 - Roteiro: **todos os 6 passos concluídos**. Loop completo + meta-progressão.
 - Código: câmera top-down; WaveService (ondas/dificuldade/chefe/morte), EnemyService (stats por inimigo), WeaponService, XpService (XP+nível+upgrades de run), PlayerStats (base permanente vs. run), SaveService (DataStore), MetaService (moedas + loja de perks), Remotes, PlayerUtil, Analytics; HUD com XP/nível, onda, upgrades, moedas, loja (tecla B) e aviso de morte.
 - Cada vida = nova partida: nível/upgrades resetam; moedas e perks permanentes ficam.
 - Pendências conhecidas: (1) chamadas de AnalyticsService não verificadas na doc (todas em pcall); (2) DataStore não persiste em teste local não publicado — SaveService cai para memória e avisa; (3) sem recompensa diária / gancho do dia 2 ainda (RETENCAO seção 4, candidatos a próximo trabalho).
-- Documentação existente: CLAUDE.md, RETENCAO.md, AGENTES.md, CONTEXTO.md.
+- Documentação existente: README.md, CLAUDE.md, CONTEXTO.md, SETUP.md, DESIGN.md, AGENTES.md, RETENCAO.md.
 - Agentes e skills do projeto: criados (4 agentes; skills retention e novo-sistema).
 - Repo: GabrielDaFontouraBarbosa/Bloxian-Survivors (branch main).
-- MCP do Studio: provavelmente desligado; confirmar com `/mcp`. Rojo: confirmar versão em rokit.toml.
-- Bloqueios: nenhum conhecido.
+- Jogo RODANDO: o usuário montou Rojo + Studio no Windows em 2026-10-28 e jogou. Passo a passo validado em SETUP.md.
+- NUNCA foi feito playtest pelo Claude nem balanceamento com jogador real. O usuário achou "ficando bom"; nenhum ajuste de Config pedido ainda.
+- Fase atual: o usuário parou de olhar mecânica/balanceamento e foi pensar ARTE, LORE e personagens. Ver DESIGN.md.
+- MCP do Studio: desligado. ATENÇÃO: de sessão na NUVEM o MCP do Studio é inalcançável (roda no PC do usuário). Ver AGENTES.md seção 6.
+- Bloqueios: nenhum técnico. O que destrava design é o usuário definir o TOM/vibe (DESIGN.md seção 4).
 
 ## 4. Ainda não decidido (perguntar ao usuário quando o passo exigir; não presumir)
+As decisões de ARTE, LORE e PERSONAGENS migraram para o DESIGN.md (seção 4), que é mais detalhado. Resumo do que falta:
+- **Tom / vibe do jogo** — é o que destrava todo o resto (boneco, inimigos, nome, assets).
+- **Nome do jogo.** "Bloxian Survivors" é placeholder do repo, não decisão.
+- **Personagens desbloqueáveis vs. um boneco que upa** — rumo definido no DESIGN.md seção 1 (os dois, em ordem), mas não implementado.
 - Plataformas alvo (PC, celular, console). Afeta controles e UI; Roblox roda em todas. Sugestão: testar controle de celular cedo.
 - Solo ou co-op. O RETENCAO.md aponta co-op como candidato forte para depois do passo 6.
 - Estilo visual e origem dos assets (formas simples, modelos próprios ou Creator Store).
@@ -49,15 +56,20 @@ Jogo no Roblox estilo Vampire Survivors ("bullet heaven"): o jogador só se move
 - O Roblox mede retenção por coorte e recomenda focar primeiro em D1 e tempo médio de sessão (doc oficial).
 - Benchmarks por gênero são de blogs de terceiros. Não existe benchmark oficial para bullet heaven; o do Creator Hub (jogos similares) é o que vale.
 - O Studio tem MCP embutido (Play, console, screenshot). O repositório `studio-rust-mcp-server` está arquivado; não usar. Detalhes no AGENTES.md, seção 6.
-- Conferir na doc atual a assinatura de `AnalyticsService:LogFunnelStepEvent` antes de usar o exemplo do RETENCAO.md.
+- NÃO VERIFICADO: todas as chamadas de AnalyticsService no código (`LogFunnelStepEvent`, `LogProgressionEvent`, `LogCustomEvent`, `LogEconomyEvent`) foram escritas sem confirmar a assinatura na doc atual. Estão todas em `pcall`, então não quebram nada, mas NÃO confie nos números antes de validar (candidato a tarefa do roblox-researcher).
+- DataStore só funciona em jogo PUBLICADO e, no Studio, com "Enable Studio Access to API Services". Em teste local o SaveService cai para memória e avisa — comportamento esperado, não bug.
 - Não verificado: os nomes exatos das ferramentas do Studio MCP dentro do Claude Code (ver `/mcp`).
+- Rojo: `rokit.toml` fixa 7.5.1, versão NÃO confirmada como a mais recente. O usuário rodou com o `rojo.exe` baixado direto do GitHub Releases.
 
 ## 7. Mapa dos arquivos
 
 | Arquivo | Para quê | Quando ler |
 |---|---|---|
+| README.md | Visão geral do repo e mapa | Primeiro contato com o repo |
 | CLAUDE.md | Regras do projeto e roteiro | Sempre (carrega sozinho) |
 | CONTEXTO.md | Estado atual e decisões (este) | Início de sessão nova |
+| SETUP.md | Como rodar no Studio (fluxo validado) | Ao configurar a máquina ou debugar sync |
+| DESIGN.md | Arte, lore, personagens e decisões em aberto | Ao mexer em visual, personagem ou conteúdo |
 | RETENCAO.md | Fórmulas, benchmarks e mecânicas de retenção | Ao mexer em progressão, recompensas, level up, meta-progressão ou analytics |
 | AGENTES.md | Agentes, economia de tokens, MCP e skills | Ao delegar tarefa ou configurar agentes, MCP ou skills |
 

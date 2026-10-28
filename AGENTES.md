@@ -185,6 +185,8 @@ Correção a uma afirmação anterior: o Roblox Studio tem um servidor MCP embut
 
 **Custo:** MCP adiciona ferramentas ao contexto. Ligar só quando for testar e desligar depois (`/mcp`).
 
+**Nuvem vs. local (importante, verificado na pratica):** o MCP embutido do Studio roda **na maquina do usuario**. Uma sessao do Claude Code **na nuvem nao alcanca** esse MCP, entao o `playtest-runner` so funciona a partir de uma sessao **local** do Claude Code, rodando na pasta do projeto no PC do usuario. De sessao na nuvem, quem aperta Play e o usuario, e o Claude pede o Output colado. Nao prometa playtest de sessao na nuvem.
+
 ---
 
 ## 7. Skills
