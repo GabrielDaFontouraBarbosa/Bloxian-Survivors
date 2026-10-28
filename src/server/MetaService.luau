@@ -104,7 +104,8 @@ end
 -- Comeca uma nova vida/partida: aplica a base e zera o progresso de run.
 function MetaService.startRun(player: Player)
 	local class = classFor(player)
-	print(("[Survivors] %s entrou como %s (arma: %s)."):format(player.Name, class.name, class.weapon.name))
+	local weaponName = (class.weapon and class.weapon.name) or "?"
+	print(("[Survivors] %s entrou como %s (arma: %s)."):format(player.Name, class.name, weaponName))
 	PlayerStats.setBase(player, buildBase(player))
 	PlayerStats.applyToHumanoid(player)
 	XpService.resetRun(player)
@@ -112,6 +113,18 @@ function MetaService.startRun(player: Player)
 end
 
 function MetaService.init()
+	-- Fail-fast: o catalogo de classes precisa ter ao menos 1 entrada e o
+	-- DefaultClassId precisa existir nele, senao a base da run fica indefinida.
+	assert(#Config.Classes > 0, "Config.Classes esta vazio")
+	local hasDefault = false
+	for _, class in Config.Classes do
+		if class.id == Config.DefaultClassId then
+			hasDefault = true
+			break
+		end
+	end
+	assert(hasDefault, "Config.DefaultClassId nao existe em Config.Classes")
+
 	buyPerk.OnServerEvent:Connect(function(player, id)
 		if typeof(id) ~= "string" then
 			return
