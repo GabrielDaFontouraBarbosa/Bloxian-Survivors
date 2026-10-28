@@ -28,13 +28,13 @@ Jogo no Roblox estilo Vampire Survivors ("bullet heaven"): o jogador só se move
 - Repo: GabrielDaFontouraBarbosa/Bloxian-Survivors (branch main).
 - Jogo RODANDO: o usuário montou Rojo + Studio no Windows em 2026-10-28 e jogou. Passo a passo validado em SETUP.md.
 - NUNCA foi feito playtest pelo Claude nem balanceamento com jogador real. O usuário achou "ficando bom"; nenhum ajuste de Config pedido ainda.
-- Fase atual: o usuário parou de olhar mecânica/balanceamento e foi pensar ARTE, LORE e personagens. Ver DESIGN.md.
+- Fase atual: design. TOM/VIBE DECIDIDO (2026-10-28): Vampire Survivors raiz — terror gótico/Castlevania, executado em low-poly 3D limpo (não pixel). Ver DESIGN.md seção 0. Ainda nada implementado desse visual.
 - MCP do Studio: desligado. ATENÇÃO: de sessão na NUVEM o MCP do Studio é inalcançável (roda no PC do usuário). Ver AGENTES.md seção 6.
-- Bloqueios: nenhum técnico. O que destrava design é o usuário definir o TOM/vibe (DESIGN.md seção 4).
+- Bloqueios: nenhum técnico. Em aberto no design: nome do jogo, fonte dos assets e nº de personagens (DESIGN.md seção 4).
 
 ## 4. Ainda não decidido (perguntar ao usuário quando o passo exigir; não presumir)
 As decisões de ARTE, LORE e PERSONAGENS migraram para o DESIGN.md (seção 4), que é mais detalhado. Resumo do que falta:
-- **Tom / vibe do jogo** — é o que destrava todo o resto (boneco, inimigos, nome, assets).
+- ~~Tom / vibe do jogo~~ — DECIDIDO (DESIGN.md seção 0): VS gótico, low-poly 3D limpo.
 - **Nome do jogo.** "Bloxian Survivors" é placeholder do repo, não decisão.
 - **Personagens desbloqueáveis vs. um boneco que upa** — rumo definido no DESIGN.md seção 1 (os dois, em ordem), mas não implementado.
 - Plataformas alvo (PC, celular, console). Afeta controles e UI; Roblox roda em todas. Sugestão: testar controle de celular cedo.

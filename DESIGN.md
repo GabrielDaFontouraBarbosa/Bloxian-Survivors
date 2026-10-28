@@ -6,6 +6,20 @@ Este documento registra **decisões tomadas e perguntas ainda abertas**. Atualiz
 
 ---
 
+## 0. Tom e visual — DECIDIDO (2026-10-28)
+
+**Tom:** Vampire Survivors raiz — terror gótico / caça-monstros estilo Castlevania. Nada de pet quadrado nem rig padrão do Roblox: a identidade própria é o antídoto ao visual genérico de free model que domina o gênero no Roblox (é a brecha de diferenciação).
+
+**Execução visual:** gótico limpo em **low-poly 3D** — NÃO tentar emular o pixel art 2D do VS. Monstros 3D simples mas de silhueta clara, arena escura com luz de lua e magia brilhante. Captura o *tom* do VS respeitando a câmera top-down e o teste dos 40px (seção 2).
+
+Decorre daí (detalhar quando cada um for implementado):
+- **Boneco:** caçador solitário (casaco/chapéu/chicote), não o avatar padrão.
+- **Inimigos:** bestiário clássico — morcego, esqueleto, caveira voadora, ghoul; chefe tipo ceifador/lorde. Cada um com silhueta bem distinta.
+- **Armas:** fantasia do VS — chicote, cruz, alho, bíblia, água benta — no lugar de "projétil genérico".
+- **Paleta:** a atual já encaixa (inimigo vermelho, chefe roxo, gema azul-neon, projétil amarelo = VS gótico). Falta fundo escuro + luz de lua.
+
+---
+
 ## 1. A pergunta central: personagens desbloqueáveis ou um boneco que upa?
 
 **Decisão de rumo (2026-10-28): os dois, em ordem — e personagem tratado como DADO desde já.**
@@ -61,9 +75,9 @@ Lore no Roblox **quase não move retenção sozinha**. O que ela faz bem:
 
 ## 4. Em aberto (perguntar ao usuário; não presumir)
 
-- **Tom / vibe.** Terror cringe-meme, anime, sci-fi, fofo-sinistro, brainrot? Decide boneco, inimigos, nome e de onde vêm os assets. **É o que destrava o resto.**
-- **Nome do jogo.** Hoje o repo se chama "Bloxian Survivors" — placeholder, não decisão.
-- **Origem dos assets.** Formas simples (atual), rigs de avatar Roblox + acessórios (barato), Creator Store, ou modelagem própria em Blender (caro). Reaproveitar rig de avatar é muito mais rápido que modelar.
+- ~~**Tom / vibe.**~~ DECIDIDO — ver seção 0 (VS gótico, low-poly 3D limpo).
+- **Nome do jogo.** Hoje o repo se chama "Bloxian Survivors" — placeholder, não decisão. Agora com o tom definido (seção 0), dá pra puxar um nome gótico/caça-monstros.
+- **Origem dos assets.** Direção é low-poly 3D próprio e simples (seção 0); falta decidir a fonte: formas simples (atual), rigs de avatar Roblox + acessórios (barato), Creator Store, ou modelagem própria em Blender (caro). Reaproveitar rig de avatar é muito mais rápido que modelar.
 - **Quantos personagens no lançamento** e qual o eixo de diferença entre eles (arma inicial? stat marcante?).
 - **Plataformas alvo** (PC, celular, console) — afeta UI e controles. O painel de upgrade e a loja hoje assumem mouse/clique.
 - **Solo ou co-op** (a skill `retention` aponta co-op como candidato forte depois do loop estar bom).
