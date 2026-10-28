@@ -91,3 +91,29 @@ Vêm da skill `retention` (seção 4 do RETENCAO original). Nenhum foi feito:
 - **Gancho do dia 2:** ao morrer, mostrar algo quase alcançado (ex.: "faltam 7 moedas pro próximo nível de Dano").
 - **Recompensa diária sem punição:** bônus por voltar, nunca zerar progresso por ausência (regra firme do projeto — FOMO é dark pattern com público jovem).
 - **Desbloqueio de personagens/armas** como meta de médio prazo (depende da seção 1).
+
+---
+
+## 6. Visão de meta-progressão — DECIDIDA em direção (2026-10-28)
+
+O jogo é o loop de survivors (feito) + um **hub/cidade** em volta. Fórmula comum no Roblox, mas feita com a cara gótica (seção 0), não com o pacote genérico de free model.
+
+| Sistema | Como fica | Custo |
+|---|---|---|
+| Personagem + **classes** | Abordagem A (seção 1): classe = arma inicial + stats próprios, 1 entrada no `Config`. `PlayerStats` já suporta. | Barato |
+| Armas de classe + upgrade | Em cima do `WeaponService` + upgrades de run que já existem; cada classe nasce com a sua | Barato |
+| **"Armadura"** | **Sem loot/gear** (decisão firme — ver abaixo): é upgrade permanente (vida/defesa) + skin visual do caçador, via `MetaService` que já existe | Barato/médio |
+| **Pets** | Familiar que ataca junto (morcego/corvo/gárgula gótico, nunca pet-cubo). É mais um auto-atacante | Médio |
+| **Cidade / lobby** | Hub pra escolher classe, vestir skin e gastar moeda. A loja de hoje (tecla B) vira um ponto da cidade | Médio (mundo + UI + possível place separado) |
+
+**Decisão firme: NADA de loot/equipamento.** Peças de armor com stats aleatórios, inventário e comparação de itens foram recusadas — é a direção Borderlands que o projeto rejeitou no início (CONTEXTO seção 2) e muda o tom do VS. "Armadura" aqui = progressão + aparência, não gear farm.
+
+**Ordem sugerida (um passo pequeno por vez, testar antes de seguir):**
+1. Classes como DADO + 1ª classe (o caçador inicial) no `Config`. Base de tudo.
+2. Reskin visual gótico (arena escura + luz de lua + inimigos temáticos). Independente, dá pra fazer em paralelo.
+3. Cidade/lobby simples: escolher classe + a loja atual vira um canto da cidade.
+4. "Armadura": novos perks permanentes + skins no `MetaService`.
+5. Pet-familiar (novo auto-atacante).
+6. 2ª classe + tela de seleção/desbloqueio.
+
+(Ordem é proposta, não contrato. Nada disso está implementado.)

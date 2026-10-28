@@ -35,6 +35,7 @@ Jogo no Roblox estilo Vampire Survivors ("bullet heaven"): o jogador só se move
 ## 4. Ainda não decidido (perguntar ao usuário quando o passo exigir; não presumir)
 As decisões de ARTE, LORE e PERSONAGENS migraram para o DESIGN.md (seção 4), que é mais detalhado. Resumo do que falta:
 - ~~Tom / vibe do jogo~~ — DECIDIDO (DESIGN.md seção 0): VS gótico, low-poly 3D limpo.
+- Visão de meta-progressão (classes, armadura=upgrade+skin, pets-familiares, cidade/lobby) — DECIDIDA em direção (DESIGN.md seção 6). Loot/gear RECUSADO. Nada implementado ainda.
 - **Nome do jogo.** "Bloxian Survivors" é placeholder do repo, não decisão.
 - **Personagens desbloqueáveis vs. um boneco que upa** — rumo definido no DESIGN.md seção 1 (os dois, em ordem), mas não implementado.
 - Plataformas alvo (PC, celular, console). Afeta controles e UI; Roblox roda em todas. Sugestão: testar controle de celular cedo.
