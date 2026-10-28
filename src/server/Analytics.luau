@@ -56,6 +56,34 @@ function Analytics.runDeath(player: Player, wave: number, elapsed: number)
 	end)
 end
 
+-- Passo 6: perk permanente comprado (evento economico: pra onde vai a moeda).
+function Analytics.perkBought(
+	player: Player,
+	perkId: string,
+	newLevel: number,
+	cost: number,
+	endingBalance: number
+)
+	pcall(function()
+		AnalyticsService:LogEconomyEvent(
+			player,
+			Enum.AnalyticsEconomyFlowType.Sink,
+			"Coins",
+			cost,
+			endingBalance,
+			Enum.AnalyticsEconomyTransactionType.Shop.Name,
+			perkId
+		)
+	end)
+	pcall(function()
+		AnalyticsService:LogCustomEvent(player, "PerkBought", 1, {
+			perk = perkId,
+			level = newLevel,
+			cost = cost,
+		})
+	end)
+end
+
 Players.PlayerRemoving:Connect(function(player)
 	firstKillDone[player] = nil
 end)

@@ -41,7 +41,7 @@ src/
 - [x] 3. Arma automática: mira no inimigo mais próximo e ataca sozinha
 - [x] 4. XP + level up com tela de escolha de 3 upgrades
 - [x] 5. Ondas, dificuldade crescente e chefe
-- [ ] 6. Meta-progressão: moedas entre partidas, upgrades permanentes, DataStore
+- [x] 6. Meta-progressão: moedas entre partidas, upgrades permanentes, DataStore
 
 ## Como trabalhar comigo
 - Antes de codar um passo, explique em poucas linhas o plano e quais arquivos vai criar/mudar.

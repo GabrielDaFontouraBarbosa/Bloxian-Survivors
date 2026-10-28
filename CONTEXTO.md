@@ -19,10 +19,10 @@ Jogo no Roblox estilo Vampire Survivors ("bullet heaven"): o jogador só se move
 
 ## 3. Estado atual (atualizar a cada passo)
 - Data da última atualização: 2026-10-27
-- Roteiro: passos 1 a 5 concluídos. Próximo: passo 6 (meta-progressão: moedas, upgrades permanentes, DataStore).
-- Código do jogo escrito: câmera top-down; WaveService (ondas/dificuldade/chefe/morte), EnemyService (stats por inimigo), WeaponService, XpService (XP+nível+upgrades), PlayerStats, Remotes, PlayerUtil, Analytics; HUD com XP/nível, onda, painel de upgrades e aviso de morte.
-- Upgrades (Config.Upgrades): dano, cadência, velocidade, vida, ímã. Curva de ondas em Config.Wave; chefe em Config.Boss (a cada 3 ondas).
-- Pendente de verificação: todas as chamadas de AnalyticsService (em pcall). Reinício de partida de verdade só no passo 6.
+- Roteiro: **todos os 6 passos concluídos**. Loop completo + meta-progressão.
+- Código: câmera top-down; WaveService (ondas/dificuldade/chefe/morte), EnemyService (stats por inimigo), WeaponService, XpService (XP+nível+upgrades de run), PlayerStats (base permanente vs. run), SaveService (DataStore), MetaService (moedas + loja de perks), Remotes, PlayerUtil, Analytics; HUD com XP/nível, onda, upgrades, moedas, loja (tecla B) e aviso de morte.
+- Cada vida = nova partida: nível/upgrades resetam; moedas e perks permanentes ficam.
+- Pendências conhecidas: (1) chamadas de AnalyticsService não verificadas na doc (todas em pcall); (2) DataStore não persiste em teste local não publicado — SaveService cai para memória e avisa; (3) sem recompensa diária / gancho do dia 2 ainda (RETENCAO seção 4, candidatos a próximo trabalho).
 - Documentação existente: CLAUDE.md, RETENCAO.md, AGENTES.md, CONTEXTO.md.
 - Agentes e skills do projeto: criados (4 agentes; skills retention e novo-sistema).
 - Repo: GabrielDaFontouraBarbosa/Bloxian-Survivors (branch main).

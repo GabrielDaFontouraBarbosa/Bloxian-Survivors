@@ -98,4 +98,42 @@ Config.Upgrades = {
 	{ id = "magnet", name = "+Iman", desc = "+5 de raio de coleta de XP", amount = 5 },
 }
 
+-- Meta-progressao: moeda permanente e perks que ficam entre partidas.
+-- Regra do projeto (retention): a moeda e paga mesmo morrendo e NAO existe
+-- punicao por ficar ausente. Perks aceleram a habilidade, nao travam conteudo.
+Config.Meta = {
+	CoinPerKill = 1,
+	SaveIntervalSec = 30, -- flush periodico no DataStore (respeita rate limit)
+	DataStoreName = "SurvivorsProfiles_v1",
+	Perks = {
+		{
+			id = "damage",
+			field = "damage",
+			name = "Dano permanente",
+			desc = "+1 de dano base",
+			amount = 1,
+			baseCost = 10,
+			costGrowth = 1.6,
+		},
+		{
+			id = "health",
+			field = "maxHealth",
+			name = "Vida permanente",
+			desc = "+20 de vida base",
+			amount = 20,
+			baseCost = 12,
+			costGrowth = 1.6,
+		},
+		{
+			id = "speed",
+			field = "walkSpeed",
+			name = "Velocidade permanente",
+			desc = "+1 de velocidade base",
+			amount = 1,
+			baseCost = 15,
+			costGrowth = 1.8,
+		},
+	},
+}
+
 return Config

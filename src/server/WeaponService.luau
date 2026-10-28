@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
 local EnemyService = require(script.Parent.EnemyService)
 local PlayerStats = require(script.Parent.PlayerStats)
+local MetaService = require(script.Parent.MetaService)
 local Analytics = require(script.Parent.Analytics)
 
 local WeaponService = {}
@@ -101,6 +102,7 @@ function WeaponService.update(dt: number)
 		if dist <= Config.Weapon.HitRadius then
 			local killed = EnemyService.damage(pr.target, PlayerStats.get(pr.owner).damage)
 			if killed then
+				MetaService.onKill(pr.owner) -- moeda permanente (fica mesmo morrendo)
 				Analytics.firstEnemyKill(pr.owner)
 			end
 			recycle(i)

@@ -105,6 +105,16 @@ local function tryLevelUp(player: Player)
 	fireProgress(player)
 end
 
+-- Novo run (nova vida): volta ao nivel 1 e zera o XP. Perks permanentes ficam.
+function XpService.resetRun(player: Player)
+	local pr = getProg(player)
+	pr.xp = 0
+	pr.level = 1
+	pr.pending = false
+	pr.offered = {}
+	fireProgress(player)
+end
+
 function XpService.addXp(player: Player, amount: number)
 	local pr = getProg(player)
 	pr.xp += amount

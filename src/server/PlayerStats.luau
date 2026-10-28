@@ -1,7 +1,8 @@
 --!strict
--- Stats de combate por jogador. Comeca dos valores base do Config e sobe com
--- os upgrades do level up. A arma e o XP leem daqui (nao do Config global).
-local Players = game:GetService("Players")
+-- Stats de combate por jogador em duas camadas:
+--   base    = Config + perks permanentes (definido pelo MetaService no inicio da vida)
+--   current = base + upgrades do level up (reseta a cada nova vida/partida)
+-- A arma e o XP leem o `current`. Numeros base no Config.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
@@ -16,7 +17,8 @@ export type Stats = {
 	magnetRadius: number,
 }
 
-local stats: { [Player]: Stats } = {}
+local base: { [Player]: Stats } = {}
+local current: { [Player]: Stats } = {}
 
 local function defaults(): Stats
 	return {
@@ -28,30 +30,65 @@ local function defaults(): Stats
 	}
 end
 
+-- Stats usados em jogo (cria defaults se ainda nao houver base definido).
 function PlayerStats.get(player: Player): Stats
-	local s = stats[player]
-	if not s then
-		s = defaults()
-		stats[player] = s
+	local c = current[player]
+	if not c then
+		c = defaults()
+		current[player] = c
+		base[player] = table.clone(c)
 	end
-	return s
+	return c
 end
 
--- Aplica velocidade e vida no Humanoid atual (se existir).
-local function applyToHumanoid(player: Player)
+-- Define a base permanente (Config + perks) e zera os upgrades de run.
+function PlayerStats.setBase(player: Player, stats: Stats)
+	base[player] = stats
+	current[player] = table.clone(stats)
+end
+
+-- Novo run: volta current para a base (perde os upgrades do level up).
+function PlayerStats.resetRun(player: Player)
+	local b = base[player]
+	current[player] = if b then table.clone(b) else defaults()
+end
+
+function PlayerStats.applyToHumanoid(player: Player)
 	local s = PlayerStats.get(player)
 	local char = player.Character
 	local hum = char and char:FindFirstChildOfClass("Humanoid")
 	if hum then
 		hum.WalkSpeed = s.walkSpeed
 		hum.MaxHealth = s.maxHealth
-		if hum.Health < s.maxHealth then
-			hum.Health = s.maxHealth
+		hum.Health = s.maxHealth
+	end
+end
+
+-- Soma delta na base E no current (perk comprado durante a run: vale ja e persiste).
+function PlayerStats.bump(player: Player, field: string, delta: number)
+	local c = PlayerStats.get(player) -- garante tabelas
+	local b = base[player]
+	if b then
+		local bAny = b :: any
+		bAny[field] += delta
+	end
+	local cAny = c :: any
+	cAny[field] += delta
+	if field == "walkSpeed" or field == "maxHealth" then
+		local char = player.Character
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		if hum then
+			if field == "walkSpeed" then
+				hum.WalkSpeed = c.walkSpeed
+			else
+				hum.MaxHealth = c.maxHealth
+				hum.Health = math.min(c.maxHealth, hum.Health + delta)
+			end
 		end
 	end
 end
 
--- Aplica um upgrade do Config.Upgrades. O efeito mora aqui; os numeros no Config.
+-- Upgrade do level up (so no current, reseta no proximo run).
 function PlayerStats.applyUpgrade(player: Player, entry: { [string]: any })
 	local s = PlayerStats.get(player)
 	if entry.id == "damage" then
@@ -60,7 +97,7 @@ function PlayerStats.applyUpgrade(player: Player, entry: { [string]: any })
 		s.fireInterval = math.max(Config.Progression.FireIntervalMin, s.fireInterval * entry.mult)
 	elseif entry.id == "speed" then
 		s.walkSpeed += entry.amount
-		applyToHumanoid(player)
+		PlayerStats.applyToHumanoid(player)
 	elseif entry.id == "health" then
 		s.maxHealth += entry.amount
 		local char = player.Character
@@ -74,24 +111,9 @@ function PlayerStats.applyUpgrade(player: Player, entry: { [string]: any })
 	end
 end
 
-function PlayerStats.init()
-	local function onPlayer(player: Player)
-		PlayerStats.get(player)
-		player.CharacterAdded:Connect(function()
-			-- espera o Humanoid aparecer e reaplica os stats atuais
-			task.defer(applyToHumanoid, player)
-		end)
-		if player.Character then
-			applyToHumanoid(player)
-		end
-	end
-	for _, player in Players:GetPlayers() do
-		onPlayer(player)
-	end
-	Players.PlayerAdded:Connect(onPlayer)
-	Players.PlayerRemoving:Connect(function(player)
-		stats[player] = nil
-	end)
+function PlayerStats.cleanup(player: Player)
+	base[player] = nil
+	current[player] = nil
 end
 
 return PlayerStats
