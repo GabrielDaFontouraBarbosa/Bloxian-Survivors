@@ -22,6 +22,7 @@ Jogo no Roblox estilo Vampire Survivors ("bullet heaven"): o jogador só se move
 - Roteiro: **todos os 6 passos concluídos**. Loop completo + meta-progressão.
 - Código: câmera top-down; WaveService (ondas/dificuldade/chefe/morte), EnemyService (stats por inimigo), WeaponService, XpService (XP+nível+upgrades de run), PlayerStats (base permanente vs. run), SaveService (DataStore), MetaService (moedas + loja de perks), Remotes, PlayerUtil, Analytics; HUD com XP/nível, onda, upgrades, moedas, loja (tecla B) e aviso de morte.
 - Cada vida = nova partida: nível/upgrades resetam; moedas e perks permanentes ficam.
+- Meta-fase passo 1 FEITO (2026-10-28): CLASSES COMO DADO. Config.Classes + Config.DefaultClassId; perfil guarda classId (SaveService valida/persiste; setClass pronto p/ a cidade); MetaService.buildBase monta a base a partir da classe e loga a classe no startRun. 1 classe ("Cacador") = baseline atual (sem mudar balanceamento). Sem tela de seleção ainda (vem na cidade). Ordem da meta-fase: DESIGN.md seção 6.
 - Pendências conhecidas: (1) chamadas de AnalyticsService não verificadas na doc (todas em pcall); (2) DataStore não persiste em teste local não publicado — SaveService cai para memória e avisa; (3) sem recompensa diária / gancho do dia 2 ainda (RETENCAO seção 4, candidatos a próximo trabalho).
 - Documentação existente: README.md, CLAUDE.md, CONTEXTO.md, SETUP.md, DESIGN.md, AGENTES.md, RETENCAO.md.
 - Agentes e skills do projeto: criados (4 agentes; skills retention e novo-sistema).

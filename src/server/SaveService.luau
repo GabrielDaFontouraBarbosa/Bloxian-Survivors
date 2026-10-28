@@ -17,6 +17,7 @@ local SaveService = {}
 export type Profile = {
 	coins: number,
 	perks: { [string]: number }, -- id do perk -> quantas vezes comprado
+	classId: string, -- classe escolhida (DESIGN.md secao 6)
 }
 
 local store: DataStore? = nil
@@ -47,7 +48,17 @@ local function getStore(): DataStore?
 end
 
 local function defaultProfile(): Profile
-	return { coins = 0, perks = {} }
+	return { coins = 0, perks = {}, classId = Config.DefaultClassId }
+end
+
+-- Confere se o id existe no catalogo de classes (nao confiar no que vem salvo/cliente).
+local function classExists(id: string): boolean
+	for _, class in Config.Classes do
+		if class.id == id then
+			return true
+		end
+	end
+	return false
 end
 
 local function keyFor(player: Player): string
@@ -80,6 +91,10 @@ function SaveService.get(player: Player): Profile
 					end
 				end
 			end
+			local classId = (data :: any).classId
+			if type(classId) == "string" and classExists(classId) then
+				profile.classId = classId -- senao fica o DefaultClassId
+			end
 		elseif not ok then
 			warnOnce("Falha ao ler o DataStore.")
 		end
@@ -109,6 +124,21 @@ function SaveService.markDirty(player: Player)
 	dirty[player] = true
 end
 
+-- Troca a classe escolhida (usado pela selecao da cidade, mais pra frente).
+-- Ignora id invalido. Devolve true se mudou de fato.
+function SaveService.setClass(player: Player, id: string): boolean
+	if not classExists(id) then
+		return false
+	end
+	local profile = SaveService.get(player)
+	if profile.classId == id then
+		return false
+	end
+	profile.classId = id
+	dirty[player] = true
+	return true
+end
+
 function SaveService.save(player: Player)
 	local profile = profiles[player]
 	if not profile or not dirty[player] then
@@ -119,7 +149,7 @@ function SaveService.save(player: Player)
 		return
 	end
 	local ok = pcall(function()
-		ds:SetAsync(keyFor(player), { coins = profile.coins, perks = profile.perks })
+		ds:SetAsync(keyFor(player), { coins = profile.coins, perks = profile.perks, classId = profile.classId })
 	end)
 	if ok then
 		dirty[player] = nil

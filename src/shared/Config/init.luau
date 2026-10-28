@@ -82,6 +82,36 @@ Config.Player = {
 	MaxHealth = 100,
 }
 
+-- Classes jogaveis (DESIGN.md secao 6: "classes como dado").
+-- Cada classe = stats iniciais proprios + arma inicial + aparencia. Adicionar
+-- classe nova = UMA entrada aqui, sem refactor: o MetaService monta a base da
+-- partida a partir da classe do jogador e os perks permanentes somam POR CIMA.
+--   stats: valores ABSOLUTOS de base; campo omitido cai no default (Weapon/Player/Xp acima).
+--   weapon/appearance: so dados por enquanto (cor do projetil e do boneco entram no reskin).
+Config.DefaultClassId = "hunter" -- classe inicial enquanto nao ha tela de selecao
+Config.Classes = {
+	{
+		id = "hunter",
+		name = "Cacador",
+		desc = "O cacador classico: equilibrado, chicote de medio alcance.",
+		-- Por ora igual ao baseline atual do jogo: e so o wiring, sem mexer no balanceamento.
+		stats = {
+			damage = Config.Weapon.Damage,
+			fireInterval = Config.Weapon.FireInterval,
+			walkSpeed = Config.Player.WalkSpeed,
+			maxHealth = Config.Player.MaxHealth,
+			magnetRadius = Config.Xp.MagnetRadius,
+		},
+		weapon = {
+			name = "Chicote",
+			projectileColor = Config.Weapon.ProjectileColor,
+		},
+		appearance = {
+			color = Color3.fromRGB(230, 225, 210),
+		},
+	},
+}
+
 -- Progressao de nivel. XP para ir do nivel N ao N+1 = round(BaseXp * Growth^(N-1)).
 Config.Progression = {
 	BaseXp = 5, -- primeiro level up vem cedo (~5 gemas)

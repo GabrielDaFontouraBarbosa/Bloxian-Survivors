@@ -28,6 +28,22 @@ local function perkById(id: string): any
 	return nil
 end
 
+-- Resolve a classe do jogador (cai no DefaultClassId se o id nao existir mais).
+local function classFor(player: Player): any
+	local profile = SaveService.get(player)
+	for _, class in Config.Classes do
+		if class.id == profile.classId then
+			return class
+		end
+	end
+	for _, class in Config.Classes do
+		if class.id == Config.DefaultClassId then
+			return class
+		end
+	end
+	return Config.Classes[1]
+end
+
 local function costFor(perk: any, level: number): number
 	return math.floor(perk.baseCost * perk.costGrowth ^ level + 0.5)
 end
@@ -58,15 +74,16 @@ local function syncThrottled(player: Player)
 	MetaService.sync(player)
 end
 
--- Base permanente da vida atual: Config + perks comprados.
+-- Base permanente da vida atual: stats iniciais da CLASSE + perks comprados.
 local function buildBase(player: Player): PlayerStats.Stats
 	local profile = SaveService.get(player)
+	local cs = (classFor(player).stats or {}) :: any
 	local stats: PlayerStats.Stats = {
-		damage = Config.Weapon.Damage,
-		fireInterval = Config.Weapon.FireInterval,
-		walkSpeed = Config.Player.WalkSpeed,
-		maxHealth = Config.Player.MaxHealth,
-		magnetRadius = Config.Xp.MagnetRadius,
+		damage = cs.damage or Config.Weapon.Damage,
+		fireInterval = cs.fireInterval or Config.Weapon.FireInterval,
+		walkSpeed = cs.walkSpeed or Config.Player.WalkSpeed,
+		maxHealth = cs.maxHealth or Config.Player.MaxHealth,
+		magnetRadius = cs.magnetRadius or Config.Xp.MagnetRadius,
 	}
 	local statsAny = stats :: any
 	for _, perk in Config.Meta.Perks do
@@ -86,6 +103,8 @@ end
 
 -- Comeca uma nova vida/partida: aplica a base e zera o progresso de run.
 function MetaService.startRun(player: Player)
+	local class = classFor(player)
+	print(("[Survivors] %s entrou como %s (arma: %s)."):format(player.Name, class.name, class.weapon.name))
 	PlayerStats.setBase(player, buildBase(player))
 	PlayerStats.applyToHumanoid(player)
 	XpService.resetRun(player)
