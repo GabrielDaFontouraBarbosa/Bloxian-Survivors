@@ -109,11 +109,11 @@ O jogo é o loop de survivors (feito) + um **hub/cidade** em volta. Fórmula com
 **Decisão firme: NADA de loot/equipamento.** Peças de armor com stats aleatórios, inventário e comparação de itens foram recusadas — é a direção Borderlands que o projeto rejeitou no início (CONTEXTO seção 2) e muda o tom do VS. "Armadura" aqui = progressão + aparência, não gear farm.
 
 **Ordem sugerida (um passo pequeno por vez, testar antes de seguir):**
-1. Classes como DADO + 1ª classe (o caçador inicial) no `Config`. Base de tudo.
-2. Reskin visual gótico (arena escura + luz de lua + inimigos temáticos). Independente, dá pra fazer em paralelo.
-3. Cidade/lobby simples: escolher classe + a loja atual vira um canto da cidade.
-4. "Armadura": novos perks permanentes + skins no `MetaService`.
-5. Pet-familiar (novo auto-atacante).
-6. 2ª classe + tela de seleção/desbloqueio.
+1. ~~Classes como DADO~~ — feito (2026-10-28).
+2. ~~Reskin gótico~~ — feito no porte VS: arena escura, luz de lua, árvores/túmulos, bestiário gótico sem animação.
+3. ~~Lobby simples~~ — feito no porte VS como **tela** (abas). A **cidade 3D** continua em aberto.
+4. "Armadura": a parte de stat virou PowerUp (Armadura/Vida). **Skins** ainda não.
+5. Pet-familiar (novo auto-atacante) — não feito.
+6. ~~Mais classes + seleção/desbloqueio~~ — feito no porte VS (9 classes, conquistas liberam, ouro compra).
 
-(Ordem é proposta, não contrato. Nada disso está implementado.)
+O porte inteiro está em `PORTE-VS.md`. Próximo de verdade: **playtest** (CONTEXTO.md seção 9), depois skins, pets e cidade 3D.
