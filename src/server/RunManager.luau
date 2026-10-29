@@ -215,9 +215,24 @@ function RunManager.start(player: Player, req: any): (boolean, string?)
 	Runs.add(run)
 	StageService.start(run)
 
+	-- Com StreamingEnabled o chao da arena pode nao ter chegado no cliente: pede
+	-- para carregar a area ANTES de teleportar (run pausada enquanto espera).
 	local spawnAt = Arena.spawnCFrame(run)
+	Runs.setPause(run, "loading", true)
+	pcall(function()
+		player:RequestStreamAroundAsync(spawnAt.Position, 3)
+	end)
+	if run.ending or not player.Parent or player.Character ~= char then
+		-- saiu ou morreu enquanto carregava: a saida/morte ja fecha a run;
+		-- qualquer outro caso fecha aqui para nao ficar pausada para sempre
+		if not run.ending and player.Parent then
+			RunManager.endRun(run, "abandon")
+		end
+		return false, nil
+	end
 	char:PivotTo(spawnAt)
 	run.rootPos = spawnAt.Position
+	Runs.setPause(run, "loading", false)
 	hum.WalkSpeed = Config.Run.BasePlayerSpeed * run.stats.moveSpeed
 
 	runState:FireClient(player, { active = true, floorY = run.floorY, stage = stageId, class = classId })
@@ -310,8 +325,14 @@ local function finish(run: Runs.Run, leaving: boolean)
 	local hum = humanoidOf(player)
 	local char = player.Character
 	if hum and char and hum.Health > 0 then
-		char:PivotTo(lobbyCFrame())
-		resetLobbyHumanoid(player)
+		local lobby = lobbyCFrame()
+		pcall(function()
+			player:RequestStreamAroundAsync(lobby.Position, 3)
+		end)
+		if player.Character == char then
+			char:PivotTo(lobby)
+			resetLobbyHumanoid(player)
+		end
 	end
 end
 
@@ -341,6 +362,15 @@ function RunManager.update(dt: number)
 		local root = char and char:FindFirstChild("HumanoidRootPart")
 		if not root or not root:IsA("BasePart") then
 			continue
+		end
+		if run.pauses.loading then
+			continue -- ainda subindo para a arena
+		end
+		-- rede de seguranca: caiu do chao da arena -> volta para cima dele
+		if root.Position.Y < run.floorY - 30 then
+			local p = root.Position
+			char:PivotTo(CFrame.new(p.X, run.floorY + 4, p.Z))
+			root.AssemblyLinearVelocity = Vector3.zero
 		end
 		run.root = root
 		run.rootPos = root.Position
