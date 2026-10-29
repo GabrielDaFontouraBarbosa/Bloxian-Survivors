@@ -39,6 +39,7 @@ export type QuestState = { id: string, progress: number }
 
 export type Profile = {
 	v: number,
+	readFailed: boolean?, -- leitura do DataStore falhou: nunca gravar (nao apagar progresso)
 	gold: number,
 	powerUps: { [string]: number }, -- id -> rank
 	spent: number, -- ouro gasto em PowerUps (para o reembolso)
@@ -268,9 +269,17 @@ function SaveService.load(player: Player): Profile
 	local profile = defaultProfile()
 	local ds = getStore()
 	if ds then
-		local ok, data = pcall(function()
-			return ds:GetAsync(keyFor(player))
-		end)
+		-- tenta algumas vezes; so trata como "sem dados" se TODAS falharem de leitura
+		local ok, data
+		for attempt = 1, 3 do
+			ok, data = pcall(function()
+				return ds:GetAsync(keyFor(player))
+			end)
+			if ok then
+				break
+			end
+			task.wait(attempt) -- backoff: 1s, 2s
+		end
 		if ok and type(data) == "table" then
 			if (data :: any).v == VERSION then
 				sanitizeV2(data, profile)
@@ -278,8 +287,11 @@ function SaveService.load(player: Player): Profile
 				migrateV1(data, profile)
 			end
 		elseif not ok then
-			warnOnce("Falha ao ler o DataStore.")
+			-- leitura falhou de verdade: NAO gravar por cima do progresso real
+			profile.readFailed = true
+			warnOnce("Falha ao ler o DataStore (nao vou gravar para nao apagar o progresso).")
 		end
+		-- ok com data nil = jogador novo, perfil default mesmo
 	end
 	loading[player] = nil
 	if player.Parent then
@@ -343,6 +355,9 @@ function SaveService.save(player: Player)
 	if not profile or not dirty[player] then
 		return
 	end
+	if profile.readFailed then
+		return -- a leitura falhou: nao arriscar sobrescrever o progresso real
+	end
 	local ds = getStore()
 	if not ds then
 		return
@@ -365,9 +380,23 @@ function SaveService.release(player: Player)
 	loading[player] = nil
 end
 
+-- Salva todos em paralelo e espera terminar (para caber nos ~30s do BindToClose).
 function SaveService.saveAll()
+	local threads: { thread } = {}
+	local pending = 0
 	for player in profiles do
-		SaveService.save(player)
+		if dirty[player] then
+			pending += 1
+			local co = task.spawn(function()
+				SaveService.save(player)
+				pending -= 1
+			end)
+			table.insert(threads, co)
+		end
+	end
+	local deadline = os.clock() + 25
+	while pending > 0 and os.clock() < deadline do
+		task.wait()
 	end
 end
 

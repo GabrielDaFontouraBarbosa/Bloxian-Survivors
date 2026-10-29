@@ -226,7 +226,7 @@ end
 
 local function buildShop()
 	local p = profile
-	Theme.label("PowerUps valem para sempre, em todas as classes. Cada compra encarece os próximos em 10%. O reembolso devolve todo o ouro.", {
+	Theme.label(("PowerUps valem para sempre, em todas as classes. Cada compra encarece os próximos em %d%%. O reembolso devolve todo o ouro."):format(math.floor(Config.Meta.PowerUpMarkup * 100 + 0.5)), {
 		TextSize = 14,
 		TextColor3 = C.dim,
 		Size = UDim2.new(1, 0, 0, 40),
@@ -419,21 +419,39 @@ function Lobby.refresh()
 	BUILDERS[current]()
 end
 
+local seeded = false
+
 -- Perfil novo do servidor (ProfileSync).
 function Lobby.render(data: any)
+	local prev = profile
 	profile = data
-	-- selecao local: comeca na ultima usada; corrige se ficou invalida
+	-- Na PRIMEIRA vez, semeia a selecao local com a ultima escolha salva.
+	-- Depois a selecao e local (o jogador clicou), e so corrige o que ficou invalido.
+	if not seeded then
+		seeded = true
+		sel.class = data.selected.class
+		sel.stage = data.selected.stage
+		sel.arcana = data.selected.arcana or ""
+	end
+	-- classe que ACABOU de ser comprada vira a selecionada
+	if prev then
+		for id, info in data.classes do
+			local before = prev.classes[id]
+			if info.owned and before and not before.owned then
+				sel.class = id
+			end
+		end
+	end
+	-- corrige selecao que deixou de ser valida
 	local cls = data.classes[sel.class]
-	if sel.class == "" or not cls or not cls.owned then
+	if not cls or not cls.owned then
 		sel.class = data.selected.class
 	end
 	if sel.stage == "" or not data.stages[sel.stage] then
 		sel.stage = data.selected.stage
 	end
 	if sel.arcana ~= "" and not data.arcanas[sel.arcana] then
-		sel.arcana = ""
-	elseif sel.arcana == "" then
-		sel.arcana = data.selected.arcana or ""
+		sel.arcana = "" -- arcano que nao esta mais liberado; "" (Nenhum) e sempre valido
 	end
 	Lobby.refresh()
 end

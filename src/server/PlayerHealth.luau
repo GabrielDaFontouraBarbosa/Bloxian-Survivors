@@ -20,7 +20,7 @@ function PlayerHealth.damage(run: Runs.Run, amount: number)
 	if run.paused or run.ending or run.hp <= 0 then
 		return
 	end
-	if os.clock() < run.invulnUntil then
+	if run.time < run.invulnUntil then -- tempo da run (para na pausa)
 		return
 	end
 	local dmg = math.max(1, amount - run.stats.armor)
@@ -31,7 +31,7 @@ function PlayerHealth.damage(run: Runs.Run, amount: number)
 	if run.revivals > 0 then
 		run.revivals -= 1
 		run.hp = run.maxHp * Config.Run.ReviveHealthFraction
-		run.invulnUntil = os.clock() + Config.Run.ReviveInvuln
+		run.invulnUntil = run.time + Config.Run.ReviveInvuln
 		Events.emit("PlayerRevived", run)
 		return
 	end

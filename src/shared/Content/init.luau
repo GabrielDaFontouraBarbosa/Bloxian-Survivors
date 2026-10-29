@@ -39,6 +39,9 @@ Content.byKind = {
 -- Stats da arma num nivel: base + soma dos degraus ate la (sem os stats do jogador).
 function Content.weaponStats(def: any, level: number): { [string]: any }
 	local s = table.clone(def.base)
+	-- multiplicadores comecam em 1 (senao o primeiro "+10% de area" vira 0,1)
+	s.area = s.area or 1
+	s.speed = s.speed or 1
 	local levels = def.levels
 	if levels then
 		for i = 1, math.min(level - 1, #levels) do
@@ -60,12 +63,12 @@ function Content.xpForLevel(level: number): number
 	if level < p.MidFrom then
 		return p.First + p.StepEarly * (level - 1)
 	end
-	local atMid = p.First + p.StepEarly * (p.MidFrom - 1)
+	local beforeMid = p.First + p.StepEarly * (p.MidFrom - 2) -- custo do nivel MidFrom-1
 	if level < p.LateFrom then
-		return atMid + p.StepMid * (level - p.MidFrom + 1)
+		return beforeMid + p.StepMid * (level - p.MidFrom + 1)
 	end
-	local atLate = atMid + p.StepMid * (p.LateFrom - p.MidFrom)
-	return atLate + p.StepLate * (level - p.LateFrom + 1)
+	local beforeLate = beforeMid + p.StepMid * (p.LateFrom - p.MidFrom) -- custo do nivel LateFrom-1
+	return beforeLate + p.StepLate * (level - p.LateFrom + 1)
 end
 
 -- Preco do proximo rank de um PowerUp.

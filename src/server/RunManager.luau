@@ -263,7 +263,7 @@ local function sendSync(run: Runs.Run)
 		revivals = run.revivals,
 		rerolls = run.rerolls,
 		skips = run.skips,
-		frozen = os.clock() < run.frozenUntil,
+		frozen = run.time < run.frozenUntil,
 		weapons = slotList(run.weapons),
 		passives = slotList(run.passives),
 	})
@@ -308,12 +308,14 @@ local function finish(run: Runs.Run, leaving: boolean)
 	Events.emit("RunEnded", run, reason, results)
 	results.chapterDone = run.data.chapterDone == true
 
-	StageService.clear(run)
-	EnemyService.clear(run)
-	WeaponService.clear(run)
-	XpService.clear(run)
-	PickupService.clear(run)
-	Arena.release(run)
+	-- cada limpeza isolada: um erro numa nao impede as outras nem o Runs.remove
+	local cleanups = { StageService.clear, EnemyService.clear, WeaponService.clear, XpService.clear, PickupService.clear, Arena.release }
+	for _, cleanup in cleanups do
+		local ok, err = pcall(cleanup, run)
+		if not ok then
+			warn("[Survivors] erro ao limpar a run: " .. tostring(err))
+		end
+	end
 	Runs.remove(player)
 	Analytics.runEnded(player, reason, run.time, run.level, run.kills)
 
@@ -353,59 +355,74 @@ function RunManager.endRun(run: Runs.Run, reason: string)
 	task.defer(finish, run, false)
 end
 
+local function updateRun(player: Player, run: Runs.Run, dt: number)
+	local char = player.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	if not char or not root or not root:IsA("BasePart") then
+		return
+	end
+	if run.pauses.loading then
+		return -- ainda subindo para a arena
+	end
+	-- rede de seguranca: caiu do chao da arena -> volta para cima dele
+	if root.Position.Y < run.floorY - 30 then
+		local p = root.Position
+		char:PivotTo(CFrame.new(p.X, run.floorY + 4, p.Z))
+		root.AssemblyLinearVelocity = Vector3.zero
+	end
+	run.root = root
+	run.rootPos = root.Position
+	local look = root.CFrame.LookVector
+	local flat = Vector3.new(look.X, 0, look.Z)
+	if flat.Magnitude > 0.1 then
+		run.facing = flat.Unit
+	end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if hum then
+		local speed = if run.paused then 0 else Config.Run.BasePlayerSpeed * run.stats.moveSpeed
+		if hum.WalkSpeed ~= speed then
+			hum.WalkSpeed = speed
+		end
+	end
+
+	ChestService.update(run)
+	if not run.paused then
+		run.time += dt
+		StageService.update(run, dt)
+		EnemyService.update(run, dt)
+		if not run.ending then
+			WeaponService.update(run, dt)
+			XpService.update(run, dt)
+			if not run.paused then -- level up pausou neste frame: bau espera
+				PickupService.update(run, dt)
+			end
+		end
+	end
+	if run.ending then
+		return
+	end
+	PlayerHealth.update(run, dt)
+	Arena.update(run)
+	if os.clock() - run.lastSync >= Config.Run.SyncInterval then
+		run.lastSync = os.clock()
+		sendSync(run)
+	end
+end
+
+-- Loop central: um erro numa run nao derruba as outras (avisa no Output, sem spam).
 function RunManager.update(dt: number)
 	for player, run in Runs.all() do
 		if run.ending then
 			continue
 		end
-		local char = player.Character
-		local root = char and char:FindFirstChild("HumanoidRootPart")
-		if not root or not root:IsA("BasePart") then
-			continue
-		end
-		if run.pauses.loading then
-			continue -- ainda subindo para a arena
-		end
-		-- rede de seguranca: caiu do chao da arena -> volta para cima dele
-		if root.Position.Y < run.floorY - 30 then
-			local p = root.Position
-			char:PivotTo(CFrame.new(p.X, run.floorY + 4, p.Z))
-			root.AssemblyLinearVelocity = Vector3.zero
-		end
-		run.root = root
-		run.rootPos = root.Position
-		local look = root.CFrame.LookVector
-		local flat = Vector3.new(look.X, 0, look.Z)
-		if flat.Magnitude > 0.1 then
-			run.facing = flat.Unit
-		end
-		local hum = char and char:FindFirstChildOfClass("Humanoid")
-		if hum then
-			local speed = if run.paused then 0 else Config.Run.BasePlayerSpeed * run.stats.moveSpeed
-			if hum.WalkSpeed ~= speed then
-				hum.WalkSpeed = speed
+		local ok, err = pcall(updateRun, player, run, dt)
+		if not ok then
+			local now = os.clock()
+			if err ~= run.data.lastError or now - (run.data.lastErrorAt or 0) > 5 then
+				run.data.lastError = err
+				run.data.lastErrorAt = now
+				warn(("[Survivors] erro na run de %s: %s"):format(player.Name, tostring(err)))
 			end
-		end
-
-		ChestService.update(run)
-		if not run.paused then
-			run.time += dt
-			StageService.update(run, dt)
-			EnemyService.update(run, dt)
-			if not run.ending then
-				WeaponService.update(run, dt)
-				XpService.update(run, dt)
-				PickupService.update(run, dt)
-			end
-		end
-		if run.ending then
-			continue
-		end
-		PlayerHealth.update(run, dt)
-		Arena.update(run)
-		if os.clock() - run.lastSync >= Config.Run.SyncInterval then
-			run.lastSync = os.clock()
-			sendSync(run)
 		end
 	end
 end
@@ -444,14 +461,22 @@ function RunManager.onPlayerAdded(player: Player)
 end
 
 -- Chamado pelo Main ANTES de salvar o perfil de quem esta saindo: guarda o ouro da run.
+local function finishNow(run: Runs.Run)
+	run.ending = true
+	if not run.data.endReason then
+		run.data.endReason = "quit"
+	end
+	local ok, err = pcall(finish, run, true)
+	if not ok then
+		warn("[Survivors] erro ao fechar a run: " .. tostring(err))
+	end
+	Runs.remove(run.player)
+end
+
 function RunManager.onPlayerRemoving(player: Player)
 	local run = Runs.get(player)
 	if run then
-		run.ending = true
-		if not run.data.endReason then
-			run.data.endReason = "quit"
-		end
-		finish(run, true)
+		finishNow(run)
 	end
 end
 
@@ -462,11 +487,7 @@ function RunManager.endAll()
 		table.insert(list, run)
 	end
 	for _, run in list do
-		run.ending = true
-		if not run.data.endReason then
-			run.data.endReason = "quit"
-		end
-		finish(run, true)
+		finishNow(run)
 	end
 end
 

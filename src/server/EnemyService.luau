@@ -324,10 +324,23 @@ function EnemyService.wipe(run: Runs.Run, keep: string?)
 	end
 end
 
--- Empurra para longe tudo perto do jogador (ao ressuscitar).
+-- Empurra para longe tudo perto do jogador (ao ressuscitar). Adiado: a
+-- ressurreicao acontece dentro do update (grade meio reconstruida), entao
+-- varre s.set direto e espera o fim do frame.
 local function blast(run: Runs.Run)
-	EnemyService.forEachInRadius(run, run.rootPos, 18, function(enemy)
-		EnemyService.damage(enemy, 0, { kb = 3, from = run.rootPos })
+	task.defer(function()
+		local s = run.data.enemies :: RunEnemies?
+		if not s or run.ending then
+			return
+		end
+		for enemy in s.set do
+			if enemy.alive then
+				local dx, dz = enemy.pos.X - run.rootPos.X, enemy.pos.Z - run.rootPos.Z
+				if dx * dx + dz * dz <= 18 * 18 then
+					EnemyService.damage(enemy, 0, { kb = 3, from = run.rootPos })
+				end
+			end
+		end
 	end)
 end
 
@@ -339,7 +352,7 @@ function EnemyService.update(run: Runs.Run, dt: number)
 	local target = run.rootPos
 	local now = os.clock()
 	local t = run.time
-	local frozen = now < run.frozenUntil
+	local frozen = t < run.frozenUntil -- Relogio conta no tempo da run (para na pausa)
 	local contactCd = Config.Run.ContactCooldown
 	local playerRadius = Config.Run.PlayerRadius
 	local relocate = Config.Run.RelocateDistance

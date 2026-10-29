@@ -89,8 +89,8 @@ function LevelUp.show(data: any)
 			Size = UDim2.fromOffset(100, 24),
 			Position = UDim2.new(1, -110, 0, 8),
 		}, card)
-		Theme.label(desc, { TextSize = 14, Size = UDim2.new(1, -92, 0, 22), Position = UDim2.fromOffset(80, 32) }, card)
-		Theme.label(hint, { TextSize = 12, TextColor3 = C.accentHi, Size = UDim2.new(1, -92, 0, 18), Position = UDim2.fromOffset(80, 56) }, card)
+		Theme.label(desc, { TextSize = 14, Size = UDim2.new(1, -92, 0, 30), Position = UDim2.fromOffset(80, 30), TextYAlignment = Enum.TextYAlignment.Top, TextTruncate = Enum.TextTruncate.AtEnd }, card)
+		Theme.label(hint, { TextSize = 12, TextColor3 = C.accentHi, Size = UDim2.new(1, -92, 0, 16), Position = UDim2.fromOffset(80, 62), TextTruncate = Enum.TextTruncate.AtEnd }, card)
 		card.Activated:Connect(function()
 			if open then
 				open = false

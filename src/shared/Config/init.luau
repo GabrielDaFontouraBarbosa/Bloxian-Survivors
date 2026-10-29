@@ -27,7 +27,7 @@ Config.Run = {
 	FloorSnap = 64, -- recentra em passos fixos (textura nao "pula")
 
 	MaxEnemies = 120, -- teto de inimigos comuns vivos por run (performance)
-	HardCapEnemies = 170, -- teto absoluto: eventos, chefes e tochas vao ate aqui
+	HardCapEnemies = 210, -- teto absoluto: deixa folga para revoadas/aneis alem dos comuns
 	SpawnRadius = 55, -- anel onde inimigos nascem (fora da tela)
 	RelocateDistance = 95, -- inimigo comum mais longe que isto reaparece no anel
 	ContactCooldown = 0.8, -- s entre acertos do mesmo inimigo no jogador
@@ -42,7 +42,7 @@ Config.Run = {
 	CollectRadius = 2.5, -- distancia para pegar a gema
 	PickupRadius = 3.5, -- distancia para pegar item de chao
 	GemSpeed = 45,
-	GemPoolSize = 400,
+	GemPoolSize = 900, -- compartilhado entre runs (250/run); folga para varias simultaneas
 	MaxPickups = 60, -- itens de chao por run (o mais velho some)
 
 	EnemyCoinChance = 0.01, -- chance de inimigo comum soltar moeda (vezes Sorte)

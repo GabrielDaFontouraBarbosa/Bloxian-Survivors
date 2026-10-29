@@ -129,10 +129,12 @@ function PickupService.spawn(run: Runs.Run, id: string, pos: Vector3)
 	end
 	local list = listOf(run)
 	if #list >= Config.Run.MaxPickups then
-		-- o mais velho some (nunca um bau)
+		-- o mais velho some (nunca um bau). table.remove preserva a ordem de idade;
+		-- o removeAt do loop de coleta pode trocar com o ultimo, por isso nao serve aqui.
 		for i = 1, #list do
 			if list[i].def.effect ~= "chest" then
-				removeAt(list, i)
+				releasePart(list[i].def, list[i].part)
+				table.remove(list, i)
 				break
 			end
 		end
@@ -156,7 +158,7 @@ local function collect(run: Runs.Run, def: any)
 	elseif effect == "vacuum" then
 		XpService.vacuum(run)
 	elseif effect == "freeze" then
-		run.frozenUntil = os.clock() + Config.Run.FreezeDuration
+		run.frozenUntil = run.time + Config.Run.FreezeDuration
 	elseif effect == "chest" then
 		ChestService.open(run)
 	end

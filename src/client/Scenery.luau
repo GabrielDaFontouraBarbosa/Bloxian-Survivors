@@ -131,7 +131,9 @@ local function refresh()
 					local x = (cx + 0.2 + hash(cx, cz, 3) * 0.6) * CELL
 					local z = (cz + 0.2 + hash(cx, cz, 4) * 0.6) * CELL
 					local turn = hash(cx, cz, 5) * math.pi * 2
-					m:PivotTo(CFrame.new(x, floorY, z) * CFrame.Angles(0, turn, 0))
+					-- o pivo e o centro da PrimaryPart; sobe metade dela para a base ficar no chao
+					local lift = m.PrimaryPart and m.PrimaryPart.Size.Y / 2 or 0
+					m:PivotTo(CFrame.new(x, floorY + lift, z) * CFrame.Angles(0, turn, 0))
 					m.Parent = folder
 					placed[key] = m
 				end
