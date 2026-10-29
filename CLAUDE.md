@@ -42,6 +42,7 @@ src/
 - [x] 4. XP + level up com tela de escolha de 3 upgrades
 - [x] 5. Ondas, dificuldade crescente e chefe
 - [x] 6. Meta-progressão: moedas entre partidas, upgrades permanentes, DataStore
+- [ ] 7. Porte das mecânicas do Vampire Survivors (`PORTE-VS.md`) — código escrito, **falta o playtest** (CONTEXTO.md seção 9)
 
 ## Como trabalhar comigo
 - Antes de codar um passo, explique em poucas linhas o plano e quais arquivos vai criar/mudar.
@@ -52,5 +53,6 @@ src/
 - Em sessão nova, leia primeiro o CONTEXTO.md (estado atual e decisões) e atualize a seção 3 dele ao fim de cada passo.
 - Para delegar pesquisa, revisão e playtest e economizar tokens, siga o AGENTES.md.
 - Ao mexer em personagem, visual, lore ou conteúdo, leia o DESIGN.md (decisões de arte e o que ainda está em aberto).
+- Ao mexer em armas, inimigos, estágio, level up ou meta (conquistas, missões, aventuras), leia o PORTE-VS.md (arquitetura: runs por jogador, barramento `Events`, conteúdo nos catálogos do `Config`).
 - Dúvida de como rodar o jogo ou de sincronização com o Studio: SETUP.md.
 - Regras de retenção (progressão, recompensas, level up, meta-progressão, analytics): a skill `retention` carrega sozinha quando o assunto aparece.

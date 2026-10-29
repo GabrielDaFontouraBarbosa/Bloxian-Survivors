@@ -6,6 +6,20 @@ Este documento registra **decisões tomadas e perguntas ainda abertas**. Atualiz
 
 ---
 
+## 0. Tom e visual — DECIDIDO (2026-10-28)
+
+**Tom:** Vampire Survivors raiz — terror gótico / caça-monstros estilo Castlevania. Nada de pet quadrado nem rig padrão do Roblox: a identidade própria é o antídoto ao visual genérico de free model que domina o gênero no Roblox (é a brecha de diferenciação).
+
+**Execução visual:** gótico limpo em **low-poly 3D** — NÃO tentar emular o pixel art 2D do VS. Monstros 3D simples mas de silhueta clara, arena escura com luz de lua e magia brilhante. Captura o *tom* do VS respeitando a câmera top-down e o teste dos 40px (seção 2).
+
+Decorre daí (detalhar quando cada um for implementado):
+- **Boneco:** caçador solitário (casaco/chapéu/chicote), não o avatar padrão.
+- **Inimigos:** bestiário clássico — morcego, esqueleto, caveira voadora, ghoul; chefe tipo ceifador/lorde. Cada um com silhueta bem distinta.
+- **Armas:** fantasia do VS — chicote, cruz, alho, bíblia, água benta — no lugar de "projétil genérico".
+- **Paleta:** a atual já encaixa (inimigo vermelho, chefe roxo, gema azul-neon, projétil amarelo = VS gótico). Falta fundo escuro + luz de lua.
+
+---
+
 ## 1. A pergunta central: personagens desbloqueáveis ou um boneco que upa?
 
 **Decisão de rumo (2026-10-28): os dois, em ordem — e personagem tratado como DADO desde já.**
@@ -61,9 +75,9 @@ Lore no Roblox **quase não move retenção sozinha**. O que ela faz bem:
 
 ## 4. Em aberto (perguntar ao usuário; não presumir)
 
-- **Tom / vibe.** Terror cringe-meme, anime, sci-fi, fofo-sinistro, brainrot? Decide boneco, inimigos, nome e de onde vêm os assets. **É o que destrava o resto.**
-- **Nome do jogo.** Hoje o repo se chama "Bloxian Survivors" — placeholder, não decisão.
-- **Origem dos assets.** Formas simples (atual), rigs de avatar Roblox + acessórios (barato), Creator Store, ou modelagem própria em Blender (caro). Reaproveitar rig de avatar é muito mais rápido que modelar.
+- ~~**Tom / vibe.**~~ DECIDIDO — ver seção 0 (VS gótico, low-poly 3D limpo).
+- **Nome do jogo.** Hoje o repo se chama "Bloxian Survivors" — placeholder, não decisão. Agora com o tom definido (seção 0), dá pra puxar um nome gótico/caça-monstros.
+- **Origem dos assets.** Direção é low-poly 3D próprio e simples (seção 0); falta decidir a fonte: formas simples (atual), rigs de avatar Roblox + acessórios (barato), Creator Store, ou modelagem própria em Blender (caro). Reaproveitar rig de avatar é muito mais rápido que modelar.
 - **Quantos personagens no lançamento** e qual o eixo de diferença entre eles (arma inicial? stat marcante?).
 - **Plataformas alvo** (PC, celular, console) — afeta UI e controles. O painel de upgrade e a loja hoje assumem mouse/clique.
 - **Solo ou co-op** (a skill `retention` aponta co-op como candidato forte depois do loop estar bom).
@@ -77,3 +91,29 @@ Vêm da skill `retention` (seção 4 do RETENCAO original). Nenhum foi feito:
 - **Gancho do dia 2:** ao morrer, mostrar algo quase alcançado (ex.: "faltam 7 moedas pro próximo nível de Dano").
 - **Recompensa diária sem punição:** bônus por voltar, nunca zerar progresso por ausência (regra firme do projeto — FOMO é dark pattern com público jovem).
 - **Desbloqueio de personagens/armas** como meta de médio prazo (depende da seção 1).
+
+---
+
+## 6. Visão de meta-progressão — DECIDIDA em direção (2026-10-28)
+
+O jogo é o loop de survivors (feito) + um **hub/cidade** em volta. Fórmula comum no Roblox, mas feita com a cara gótica (seção 0), não com o pacote genérico de free model.
+
+| Sistema | Como fica | Custo |
+|---|---|---|
+| Personagem + **classes** | Abordagem A (seção 1): classe = arma inicial + stats próprios, 1 entrada no `Config`. `PlayerStats` já suporta. | Barato |
+| Armas de classe + upgrade | Em cima do `WeaponService` + upgrades de run que já existem; cada classe nasce com a sua | Barato |
+| **"Armadura"** | **Sem loot/gear** (decisão firme — ver abaixo): é upgrade permanente (vida/defesa) + skin visual do caçador, via `MetaService` que já existe | Barato/médio |
+| **Pets** | Familiar que ataca junto (morcego/corvo/gárgula gótico, nunca pet-cubo). É mais um auto-atacante | Médio |
+| **Cidade / lobby** | Hub pra escolher classe, vestir skin e gastar moeda. A loja de hoje (tecla B) vira um ponto da cidade | Médio (mundo + UI + possível place separado) |
+
+**Decisão firme: NADA de loot/equipamento.** Peças de armor com stats aleatórios, inventário e comparação de itens foram recusadas — é a direção Borderlands que o projeto rejeitou no início (CONTEXTO seção 2) e muda o tom do VS. "Armadura" aqui = progressão + aparência, não gear farm.
+
+**Ordem sugerida (um passo pequeno por vez, testar antes de seguir):**
+1. ~~Classes como DADO~~ — feito (2026-10-28).
+2. ~~Reskin gótico~~ — feito no porte VS: arena escura, luz de lua, árvores/túmulos, bestiário gótico sem animação.
+3. ~~Lobby simples~~ — feito no porte VS como **tela** (abas). A **cidade 3D** continua em aberto.
+4. "Armadura": a parte de stat virou PowerUp (Armadura/Vida). **Skins** ainda não.
+5. Pet-familiar (novo auto-atacante) — não feito.
+6. ~~Mais classes + seleção/desbloqueio~~ — feito no porte VS (9 classes, conquistas liberam, ouro compra).
+
+O porte inteiro está em `PORTE-VS.md`. Próximo de verdade: **playtest** (CONTEXTO.md seção 9), depois skins, pets e cidade 3D.

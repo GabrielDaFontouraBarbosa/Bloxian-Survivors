@@ -1,91 +1,66 @@
 --!strict
--- Eventos de retencao (ver skill retention). ATENCAO: a assinatura de
--- AnalyticsService:LogFunnelStepEvent NAO foi verificada na doc atual e os
--- eventos so sao gravados em jogo PUBLICADO. Tudo protegido por pcall para
--- nao quebrar o teste no Studio. Confirmar na doc antes de confiar nos numeros.
-local Players = game:GetService("Players")
+-- Eventos de retencao (ver skill retention). ATENCAO: as assinaturas de
+-- AnalyticsService (LogProgressionEvent, LogCustomEvent, LogEconomyEvent) NAO
+-- foram verificadas na doc atual e os eventos so sao gravados em jogo PUBLICADO.
+-- Tudo protegido por pcall para nao quebrar o teste no Studio. Confirmar na doc
+-- antes de confiar nos numeros (tarefa para o roblox-researcher).
 local AnalyticsService = game:GetService("AnalyticsService")
-local HttpService = game:GetService("HttpService")
 
 local Analytics = {}
 
-local firstKillDone: { [Player]: boolean } = {}
-
--- Passo 2 do roteiro: primeira morte de inimigo do jogador (uma vez por vida de sessao).
-function Analytics.firstEnemyKill(player: Player)
-	if firstKillDone[player] then
-		return
-	end
-	firstKillDone[player] = true
+function Analytics.runStarted(player: Player, stageId: string, classId: string)
 	pcall(function()
-		local runId = HttpService:GenerateGUID(false)
-		AnalyticsService:LogFunnelStepEvent(player, "RunProgress", runId, 2, "FirstKill")
+		AnalyticsService:LogCustomEvent(player, "RunStarted", 1, { stage = stageId, class = classId })
 	end)
 end
 
--- Passo 4: cada nivel alcancado.
+function Analytics.runEnded(player: Player, reason: string, seconds: number, level: number, kills: number)
+	pcall(function()
+		AnalyticsService:LogCustomEvent(player, "RunEnded", 1, {
+			reason = reason,
+			seconds = math.floor(seconds),
+			level = level,
+			kills = kills,
+		})
+	end)
+end
+
 function Analytics.levelReached(player: Player, level: number)
 	pcall(function()
-		AnalyticsService:LogProgressionEvent(
-			player,
-			"Run",
-			Enum.AnalyticsProgressionType.Complete,
-			level,
-			"LevelUp"
-		)
+		AnalyticsService:LogProgressionEvent(player, "Run", Enum.AnalyticsProgressionType.Complete, level, "LevelUp")
 	end)
 end
 
--- Passo 4: upgrade escolhido no level up (vai como evento economico/custom).
 function Analytics.upgradeChosen(player: Player, level: number, upgradeId: string)
 	pcall(function()
-		AnalyticsService:LogCustomEvent(player, "UpgradeChosen", 1, {
-			level = level,
-			upgrade = upgradeId,
-		})
+		AnalyticsService:LogCustomEvent(player, "UpgradeChosen", 1, { level = level, upgrade = upgradeId })
 	end)
 end
 
--- Passo 5: morte do jogador (onda e tempo de vida da partida).
-function Analytics.runDeath(player: Player, wave: number, elapsed: number)
-	pcall(function()
-		AnalyticsService:LogCustomEvent(player, "RunDeath", 1, {
-			wave = wave,
-			seconds = math.floor(elapsed),
-		})
-	end)
-end
-
--- Passo 6: perk permanente comprado (evento economico: pra onde vai a moeda).
-function Analytics.perkBought(
-	player: Player,
-	perkId: string,
-	newLevel: number,
-	cost: number,
-	endingBalance: number
-)
+-- Ouro gasto no lobby (evento economico: para onde vai a moeda).
+local function sink(player: Player, amount: number, balance: number, itemId: string)
 	pcall(function()
 		AnalyticsService:LogEconomyEvent(
 			player,
 			Enum.AnalyticsEconomyFlowType.Sink,
-			"Coins",
-			cost,
-			endingBalance,
+			"Gold",
+			amount,
+			balance,
 			Enum.AnalyticsEconomyTransactionType.Shop.Name,
-			perkId
+			itemId
 		)
-	end)
-	pcall(function()
-		AnalyticsService:LogCustomEvent(player, "PerkBought", 1, {
-			perk = perkId,
-			level = newLevel,
-			cost = cost,
-		})
 	end)
 end
 
-Players.PlayerRemoving:Connect(function(player)
-	firstKillDone[player] = nil
-end)
+function Analytics.powerUpBought(player: Player, id: string, rank: number, cost: number, balance: number)
+	sink(player, cost, balance, "powerup_" .. id)
+	pcall(function()
+		AnalyticsService:LogCustomEvent(player, "PowerUpBought", 1, { powerUp = id, rank = rank, cost = cost })
+	end)
+end
+
+function Analytics.classBought(player: Player, id: string, cost: number, balance: number)
+	sink(player, cost, balance, "class_" .. id)
+end
 
 return Analytics
