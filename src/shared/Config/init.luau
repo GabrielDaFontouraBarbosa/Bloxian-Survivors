@@ -1,139 +1,114 @@
 --!strict
 -- Tabela central de balanceamento. Numeros do jogo ficam aqui, nunca no codigo.
+-- O CONTEUDO (armas, inimigos, classes, conquistas...) mora nos submodulos desta
+-- pasta: adicionar conteudo novo = adicionar uma entrada no catalogo certo.
+-- Mecanicas portadas do Vampire Survivors: ver PORTE-VS.md.
 local Config = {}
 
 -- Camera de cima que segue o personagem.
 Config.Camera = {
-	-- Deslocamento da camera em relacao ao personagem (studs).
-	-- Alto e um pouco atras = visao de cima levemente inclinada,
-	-- o bastante para os controles WASD continuarem intuitivos.
-	Offset = Vector3.new(0, 50, 20),
-	-- Suavizacao do movimento da camera (0 = gruda no alvo, perto de 1 = bem lento).
-	Smoothing = 0.15,
+	Offset = Vector3.new(0, 50, 20), -- alto e um pouco atras
+	Smoothing = 0.15, -- 0 = gruda no alvo, perto de 1 = bem lento
 }
 
--- Inimigos: nascem em volta do jogador e andam em linha reta ate ele.
-Config.Enemy = {
-	Health = 3,
-	Speed = 8, -- studs/s
-	ContactDamage = 5, -- dano ao encostar no jogador
-	ContactCooldown = 1, -- s entre acertos do mesmo inimigo
-	ContactRange = 4, -- distancia para considerar "encostou"
-	Size = Vector3.new(2, 2, 2),
-	Color = Color3.fromRGB(200, 60, 60),
-	SpawnRadius = 60, -- distancia do jogador onde nascem
-	SpawnInterval = 0.5, -- s entre spawns
-	MaxAlive = 100, -- teto de inimigos vivos (performance)
-	PoolSize = 120, -- parts pre-criadas para reaproveitar
-	FlashColor = Color3.fromRGB(255, 255, 255), -- cor do "pisca" ao levar dano
-	FlashTime = 0.08, -- s que o pisca dura
-	XpReward = 1, -- gemas soltas ao morrer
-}
-
--- Chefe: inimigo grande e tanky que aparece a cada N ondas.
-Config.Boss = {
-	Health = 120,
-	Speed = 6,
-	ContactDamage = 20,
-	Size = Vector3.new(6, 6, 6),
-	Color = Color3.fromRGB(140, 20, 160),
-	XpReward = 12, -- solta uma chuva de gemas
-}
-
--- Ondas e dificuldade crescente. A curva toda mora aqui (retention: tuning).
-Config.Wave = {
-	Duration = 20, -- s por onda
-	BossEveryWaves = 3, -- chefe no inicio de cada 3a onda
-	SpawnIntervalStart = 0.5, -- s entre spawns na onda 1
-	SpawnIntervalStep = 0.04, -- diminui por onda
-	SpawnIntervalMin = 0.12, -- piso
-	HealthStepPerWave = 0.15, -- vida *= 1 + step*(onda-1)
-	SpeedStepPerWave = 0.04, -- velocidade *= 1 + step*(onda-1)
-	SpeedMax = 22, -- teto de velocidade do inimigo
-}
-
--- Arma automatica: mira no inimigo mais proximo e atira sozinha.
-Config.Weapon = {
-	Damage = 2,
-	FireInterval = 0.35, -- s entre tiros
-	Range = 40, -- so mira em inimigos dentro deste alcance
-	ProjectileSpeed = 60, -- studs/s
-	ProjectileSize = Vector3.new(0.6, 0.6, 0.6),
-	ProjectileColor = Color3.fromRGB(255, 240, 120),
-	HitRadius = 1.8, -- distancia do alvo para contar acerto
-	Lifetime = 2, -- s ate o projetil se recolher se nao acertar
-	PoolSize = 200,
-}
-
--- Gemas de XP que os inimigos soltam ao morrer.
-Config.Xp = {
-	GemValue = 1,
-	GemSize = Vector3.new(1, 1, 1),
-	GemColor = Color3.fromRGB(80, 200, 255),
-	MagnetRadius = 14, -- o jogador comeca a puxar a gema
-	CollectRadius = 2.5, -- distancia para coletar
-	GemSpeed = 40, -- velocidade da gema indo ate o jogador
-	PoolSize = 300,
-}
-
--- Stats base do jogador (PlayerStats parte daqui; upgrades sobem a partir disto).
-Config.Player = {
-	WalkSpeed = 16, -- padrao do Roblox
+-- Lobby: onde o jogador nasce e volta depois de cada run.
+Config.Lobby = {
+	SpawnFallback = Vector3.new(0, 5, 0), -- usado se o mapa nao tiver SpawnLocation
+	WalkSpeed = 16,
 	MaxHealth = 100,
 }
 
--- Progressao de nivel. XP para ir do nivel N ao N+1 = round(BaseXp * Growth^(N-1)).
-Config.Progression = {
-	BaseXp = 5, -- primeiro level up vem cedo (~5 gemas)
-	Growth = 1.35, -- cada nivel custa 35% a mais
-	FireIntervalMin = 0.08, -- piso da cadencia (upgrade de firerate nao passa disso)
+-- Partida (run). Uma por jogador, cada uma no seu "andar" (arena empilhada em Y).
+Config.Run = {
+	ArenaBaseY = 1000, -- altura do chao da primeira arena (o lobby fica embaixo)
+	ArenaSpacing = 1000, -- distancia vertical entre arenas
+	FloorSize = 2048, -- chao quadrado que segue o jogador (mapa infinito)
+	FloorRecenter = 300, -- recentra o chao quando o jogador se afasta disto
+	FloorSnap = 64, -- recentra em passos fixos (textura nao "pula")
+
+	MaxEnemies = 120, -- teto de inimigos comuns vivos por run (performance)
+	HardCapEnemies = 210, -- teto absoluto: deixa folga para revoadas/aneis alem dos comuns
+	SpawnRadius = 55, -- anel onde inimigos nascem (fora da tela)
+	RelocateDistance = 95, -- inimigo comum mais longe que isto reaparece no anel
+	ContactCooldown = 0.8, -- s entre acertos do mesmo inimigo no jogador
+	PlayerRadius = 1.6, -- "tamanho" do jogador para contato
+
+	BasePlayerSpeed = 16, -- WalkSpeed com MoveSpeed 100%
+	MaxWeapons = 6,
+	MaxPassives = 6,
+	BaseOptions = 3, -- escolhas no level up (a Sorte pode dar a 4a)
+
+	BaseMagnet = 7, -- raio base de puxar XP (studs), vezes o stat Ima
+	CollectRadius = 2.5, -- distancia para pegar a gema
+	PickupRadius = 3.5, -- distancia para pegar item de chao
+	GemSpeed = 45,
+	GemPoolSize = 900, -- compartilhado entre runs (250/run); folga para varias simultaneas
+	MaxPickups = 60, -- itens de chao por run (o mais velho some)
+
+	EnemyCoinChance = 0.01, -- chance de inimigo comum soltar moeda (vezes Sorte)
+	ReviveHealthFraction = 0.5, -- volta com metade da vida ao ressuscitar
+	ReviveInvuln = 2, -- s invulneravel depois de ressuscitar
+	ChestAutoContinue = 12, -- s ate o bau fechar sozinho (nao trava a run)
+	RespawnDelay = 2.5, -- s ate renascer no lobby depois de morrer
+	SyncInterval = 0.2, -- s entre atualizacoes do HUD
+	FreezeDuration = 10, -- s do Relogio
 }
 
--- Catalogo de upgrades do level up. So dados; o efeito fica no PlayerStats.
-Config.Upgrades = {
-	{ id = "damage", name = "+Dano", desc = "+1 de dano por tiro", amount = 1 },
-	{ id = "firerate", name = "+Cadencia", desc = "-15% no tempo entre tiros", mult = 0.85 },
-	{ id = "speed", name = "+Velocidade", desc = "+2 de velocidade de corrida", amount = 2 },
-	{ id = "health", name = "+Vida", desc = "+20 de vida maxima (e cura)", amount = 20 },
-	{ id = "magnet", name = "+Iman", desc = "+5 de raio de coleta de XP", amount = 5 },
-}
-
--- Meta-progressao: moeda permanente e perks que ficam entre partidas.
--- Regra do projeto (retention): a moeda e paga mesmo morrendo e NAO existe
--- punicao por ficar ausente. Perks aceleram a habilidade, nao travam conteudo.
-Config.Meta = {
-	CoinPerKill = 1,
-	SaveIntervalSec = 30, -- flush periodico no DataStore (respeita rate limit)
-	DataStoreName = "SurvivorsProfiles_v1",
-	Perks = {
-		{
-			id = "damage",
-			field = "damage",
-			name = "Dano permanente",
-			desc = "+1 de dano base",
-			amount = 1,
-			baseCost = 10,
-			costGrowth = 1.6,
-		},
-		{
-			id = "health",
-			field = "maxHealth",
-			name = "Vida permanente",
-			desc = "+20 de vida base",
-			amount = 20,
-			baseCost = 12,
-			costGrowth = 1.6,
-		},
-		{
-			id = "speed",
-			field = "walkSpeed",
-			name = "Velocidade permanente",
-			desc = "+1 de velocidade base",
-			amount = 1,
-			baseCost = 15,
-			costGrowth = 1.8,
-		},
+-- Gemas de XP: cor/tamanho por faixa de valor (azul < verde < vermelha).
+Config.Xp = {
+	Tiers = {
+		{ min = 0, color = Color3.fromRGB(80, 200, 255), size = 0.9 },
+		{ min = 5, color = Color3.fromRGB(90, 230, 120), size = 1.2 },
+		{ min = 25, color = Color3.fromRGB(255, 70, 90), size = 1.6 },
 	},
 }
+
+-- XP para subir do nivel N ao N+1 (curva estilo VS: degraus de +10, +13, +16).
+Config.Progression = {
+	First = 5, -- nivel 1 -> 2
+	StepEarly = 10, -- ate o nivel 20
+	StepMid = 13, -- 20 a 40
+	StepLate = 16, -- 40+
+	MidFrom = 20,
+	LateFrom = 40,
+}
+
+-- Bau de chefe: quantos itens vem (a Sorte melhora) e quanto ouro.
+Config.Chest = {
+	ThreeChance = 0.12, -- chance de 3 itens (vezes Sorte)
+	FiveChance = 0.04, -- chance de 5 itens (vezes Sorte)
+	GoldBase = 20,
+	GoldPerItem = 10,
+	LevelUpGold = 25, -- ouro quando nao ha mais nada para subir
+	LevelUpHeal = 30, -- cura quando nao ha mais nada para subir
+}
+
+-- Meta-progressao (entre partidas). Regra do projeto (retention): ouro e pago
+-- mesmo morrendo, NAO existe punicao por ficar ausente, missoes nao expiram.
+Config.Meta = {
+	DataStoreName = "SurvivorsProfiles_v1", -- mesmo store; perfil tem campo de versao
+	SaveIntervalSec = 30, -- flush periodico (respeita rate limit)
+	PowerUpMarkup = 0.1, -- cada rank comprado encarece todos os PowerUps em 10%
+	QuestSlots = 3,
+	DefaultClassId = "hunter",
+	DefaultStageId = "forest",
+}
+
+-- Catalogos de conteudo (cada um e uma lista de entradas com `id`).
+Config.Stats = require(script.Stats)
+Config.Weapons = require(script.Weapons)
+Config.Passives = require(script.Passives)
+Config.Classes = require(script.Classes)
+Config.Enemies = require(script.Enemies)
+Config.Stages = require(script.Stages)
+Config.Pickups = require(script.Pickups)
+Config.PowerUps = require(script.PowerUps)
+Config.Arcanas = require(script.Arcanas)
+Config.Achievements = require(script.Achievements)
+Config.Quests = require(script.Quests)
+Config.Adventures = require(script.Adventures)
+
+-- Compatibilidade com o passo "classes como dado" (SaveService/MetaService antigos).
+Config.DefaultClassId = Config.Meta.DefaultClassId
 
 return Config

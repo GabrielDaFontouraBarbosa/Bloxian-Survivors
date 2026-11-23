@@ -33,6 +33,12 @@ RunService:BindToRenderStep("TopDownCamera", Enum.RenderPriority.Camera.Value, f
 	local desiredPos = target + offset
 	local desired = CFrame.lookAt(desiredPos, target)
 
+	-- Pulo grande (teleporte lobby <-> arena): corta direto, sem varrer o céu.
+	if (camera.CFrame.Position - desiredPos).Magnitude > 100 then
+		camera.CFrame = desired
+		return
+	end
+
 	-- Interpola suave, com passo independente de FPS.
 	local alpha = 1 - (smoothing ^ (dt * 60))
 	camera.CFrame = camera.CFrame:Lerp(desired, math.clamp(alpha, 0, 1))

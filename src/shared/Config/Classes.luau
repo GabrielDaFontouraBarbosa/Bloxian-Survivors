@@ -1,0 +1,102 @@
+--!strict
+-- Classes jogaveis (os "personagens" do VS). Cada classe = arma inicial + vida
+-- base + bonus de stats + (opcional) um traco que cresce com o nivel.
+-- Regra do DESIGN.md: bonus de classe pequenos e com personalidade; PowerUps sao
+-- globais e modestos, para nenhuma classe virar a outra.
+--   stats: bonus somados nos stats (ver Config/Stats).
+--   perk:  { stat, amount, every, max } = +amount no stat a cada `every` niveis, ate `max`.
+--   default = ja vem liberada E comprada. As outras: uma conquista libera, o ouro compra (price).
+return {
+	{
+		id = "hunter",
+		name = "Caçador",
+		desc = "Equilibrado. Fica mais forte a cada 10 níveis.",
+		weapon = "whip",
+		baseHp = 120,
+		stats = {},
+		perk = { stat = "might", amount = 0.1, every = 10, max = 0.5, desc = "+10% de Poder a cada 10 níveis (máx. +50%)." },
+		default = true,
+		price = 0,
+		color = Color3.fromRGB(200, 170, 120),
+	},
+	{
+		id = "sorceress",
+		name = "Feiticeira",
+		desc = "Aprende rápido: ganha mais XP.",
+		weapon = "wand",
+		baseHp = 100,
+		stats = { growth = 0.15 },
+		price = 250,
+		color = Color3.fromRGB(120, 160, 255),
+	},
+	{
+		id = "rogue",
+		name = "Andarilho",
+		desc = "Sempre um projétil a mais.",
+		weapon = "knife",
+		baseHp = 100,
+		stats = { amount = 1 },
+		price = 400,
+		color = Color3.fromRGB(210, 215, 225),
+	},
+	{
+		id = "lumberjack",
+		name = "Lenhador",
+		desc = "Couro grosso: mais vida e armadura.",
+		weapon = "axe",
+		baseHp = 140,
+		stats = { armor = 1 },
+		price = 300,
+		color = Color3.fromRGB(170, 120, 90),
+	},
+	{
+		id = "garlicWitch",
+		name = "Bruxa do Alho",
+		desc = "Regenera vida e começa com aura maior.",
+		weapon = "garlic",
+		baseHp = 120,
+		stats = { recovery = 0.5, area = 0.1 },
+		price = 500,
+		color = Color3.fromRGB(235, 235, 200),
+	},
+	{
+		id = "priest",
+		name = "Sacerdote",
+		desc = "Fé inabalável: volta à vida uma vez.",
+		weapon = "cross",
+		baseHp = 110,
+		stats = { revival = 1 },
+		price = 600,
+		color = Color3.fromRGB(255, 225, 140),
+	},
+	{
+		id = "monk",
+		name = "Monge",
+		desc = "Efeitos maiores e mais longos.",
+		weapon = "bible",
+		baseHp = 110,
+		stats = { area = 0.1, duration = 0.1 },
+		price = 700,
+		color = Color3.fromRGB(150, 90, 200),
+	},
+	{
+		id = "stormcaller",
+		name = "Invocadora",
+		desc = "Ataca com mais frequência.",
+		weapon = "lightning",
+		baseHp = 100,
+		stats = { cooldown = -0.1 },
+		price = 900,
+		color = Color3.fromRGB(150, 230, 255),
+	},
+	{
+		id = "reaper",
+		name = "A Ceifadora",
+		desc = "Secreta. Começa com a Espiral da Morte. Rápida, forte e amaldiçoada.",
+		weapon = "deathSpiral",
+		baseHp = 200,
+		stats = { might = 0.2, moveSpeed = 0.3, curse = 0.3 },
+		price = 5000,
+		color = Color3.fromRGB(40, 30, 40),
+	},
+}

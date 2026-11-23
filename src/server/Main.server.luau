@@ -1,28 +1,66 @@
 --!strict
--- Ponto de entrada do servidor. Liga os sistemas e roda o loop central unico.
+-- Ponto de entrada do servidor. Liga os sistemas, cuida da entrada/saida dos
+-- jogadores e roda o loop central unico (regra do projeto: um Heartbeat so).
+-- Mecanicas portadas do Vampire Survivors: ver PORTE-VS.md.
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local SaveService = require(script.Parent.SaveService)
-local MetaService = require(script.Parent.MetaService)
+local Arena = require(script.Parent.Arena)
 local EnemyService = require(script.Parent.EnemyService)
 local XpService = require(script.Parent.XpService)
 local WeaponService = require(script.Parent.WeaponService)
-local WaveService = require(script.Parent.WaveService)
+local PickupService = require(script.Parent.PickupService)
+local ChestService = require(script.Parent.ChestService)
+local AchievementService = require(script.Parent.AchievementService)
+local QuestService = require(script.Parent.QuestService)
+local AdventureService = require(script.Parent.AdventureService)
+local RunManager = require(script.Parent.RunManager)
+local MetaService = require(script.Parent.MetaService)
 
-print("[Survivors] Servidor iniciado (passo 6: moedas, upgrades permanentes e DataStore).")
+print("[Survivors] Servidor iniciado (porte VS: runs, armas, evolucao, conquistas, missoes, aventuras).")
 
 SaveService.init()
-XpService.init()
-MetaService.init()
+Arena.init()
 EnemyService.init()
+XpService.init()
 WeaponService.init()
-WaveService.init()
+PickupService.init()
+ChestService.init()
+AchievementService.init()
+QuestService.init()
+AdventureService.init()
+RunManager.init()
+MetaService.init()
 
--- Loop central: um unico Heartbeat cuida de ondas, inimigos, arma e gemas.
+local function onPlayerAdded(player: Player)
+	RunManager.onPlayerAdded(player) -- personagem nasce no lobby
+	task.spawn(function()
+		local profile = SaveService.load(player) -- pode esperar o DataStore
+		if player.Parent then
+			QuestService.ensure(profile)
+			MetaService.sync(player)
+		end
+	end)
+end
+
+for _, player in Players:GetPlayers() do
+	onPlayerAdded(player)
+end
+Players.PlayerAdded:Connect(onPlayerAdded)
+
+Players.PlayerRemoving:Connect(function(player)
+	RunManager.onPlayerRemoving(player) -- guarda o ouro da run ANTES de salvar
+	SaveService.release(player)
+end)
+
+game:BindToClose(function()
+	RunManager.endAll()
+	SaveService.saveAll()
+end)
+
+-- Loop central: um unico Heartbeat atualiza todas as runs (estagio, inimigos,
+-- armas, XP, itens, vida).
 RunService.Heartbeat:Connect(function(dt)
-	WaveService.update(dt) -- avanca a onda e spawna (comum + chefe)
-	EnemyService.update(dt) -- inimigos perseguem e batem
-	WeaponService.update(dt) -- arma mira no mais proximo e atira
-	XpService.update(dt) -- gemas voam ate o jogador
+	RunManager.update(dt)
 end)

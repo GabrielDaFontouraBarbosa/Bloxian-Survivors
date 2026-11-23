@@ -6,9 +6,9 @@ Jogo estilo Vampire Survivors ("bullet heaven") no Roblox: o jogador **só se mo
 
 ## Estado
 
-Os **6 passos do roteiro** (ver `CLAUDE.md`) estão implementados: loop completo de jogo + meta-progressão com DataStore. O jogo é jogável de ponta a ponta no Studio.
+Os **6 passos do roteiro** (ver `CLAUDE.md`) foram implementados e jogados. Em seguida veio o **porte das mecânicas do Vampire Survivors** (`PORTE-VS.md`): lobby, 9 classes, 9 armas com evolução, 16 passivas, baús, bestiário gótico sem animação, 2 estágios com eventos e a Ceifadora, PowerUps, conquistas que desbloqueiam conteúdo, missões, arcanos e aventuras.
 
-Em aberto: direção de arte e lore (`DESIGN.md`), verificação das APIs de Analytics, e balanceamento (nunca foi tunado com jogador real). Detalhes em `CONTEXTO.md`.
+**O porte ainda não foi testado com Play** — o roteiro de teste está no fim do `CONTEXTO.md`. Em aberto: playtest, balanceamento, nome do jogo, skins/pets/cidade 3D (`DESIGN.md`).
 
 ## Rodar o jogo
 
@@ -22,6 +22,7 @@ Ver **`SETUP.md`** (fluxo validado no Windows: clonar, `rojo serve`, plugin do R
 | `CONTEXTO.md` | Estado atual, decisões e pendências | Início de sessão nova |
 | `SETUP.md` | Como rodar no Studio | Ao configurar a máquina |
 | `DESIGN.md` | Arte, lore e decisões de design em aberto | Ao mexer em personagem/visual/conteúdo |
+| `PORTE-VS.md` | Mapa VS -> nosso jogo e decisões de arquitetura do porte | Ao mexer em armas, inimigos, estágio, meta |
 | `RETENCAO.md` | Fórmulas e mecânicas de retenção | Virou a skill `retention` (carrega sozinha) |
 | `AGENTES.md` | Agentes, economia de tokens, MCP, skills | Ao delegar ou configurar agentes |
 
@@ -31,8 +32,16 @@ Ver **`SETUP.md`** (fluxo validado no Windows: clonar, `rojo serve`, plugin do R
 default.project.json   -- mapa Rojo -> serviços do Roblox
 src/
   server/              -- lógica autoritativa (ServerScriptService)
-  client/              -- câmera, HUD, input (StarterPlayerScripts)
-  shared/              -- Config, Remotes, utilidades (ReplicatedStorage)
+    RunManager         -- ciclo da run (início, loop central, fim, volta ao lobby)
+    Stage/Enemy/Weapon/Xp/Pickup/ChestService, Loadout, Stats, PlayerHealth, Arena
+    Weapons/           -- um módulo por comportamento de arma
+    Meta/Achievement/Quest/AdventureService, SaveService (perfil v2)
+    Events             -- barramento de eventos entre serviços
+  client/              -- Main + Ui/ (lobby, HUD, level up, baú, resultado, avisos), cenário, câmera
+  shared/
+    Config/            -- catálogos: armas, passivas, classes, inimigos, estágios, conquistas...
+    Content/           -- índice por id + fórmulas compartilhadas
+    Remotes/           -- RemoteEvents
 ```
 
-Todo número de balanceamento mora em `src/shared/Config`.
+Todo número de balanceamento e todo conteúdo mora em `src/shared/Config`: adicionar arma, inimigo, classe ou conquista = adicionar uma entrada no catálogo.
