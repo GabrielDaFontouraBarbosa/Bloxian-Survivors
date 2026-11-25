@@ -90,7 +90,7 @@ return {
 		rarity = 100,
 		default = true,
 		maxLevel = 8,
-		base = { damage = 20, cooldown = 3, amount = 3, interval = 0.1, pierce = 1, projSpeed = 22, range = 50, spread = 0.22, size = 1.3, knockback = 1 },
+		base = { damage = 20, cooldown = 3, amount = 3, interval = 0.1, pierce = 1, projSpeed = 22, range = 50, spread = 0.22, lifetime = 3.5, size = 1.3, knockback = 1 },
 		levels = {
 			{ damage = 10 },
 			{ damage = 10, speed = 0.2 },
@@ -163,7 +163,7 @@ return {
 		from = "runetracer",
 		color = Color3.fromRGB(255, 90, 200),
 		maxLevel = 1,
-		base = { damage = 30, cooldown = 2.5, amount = 3, interval = 0.15, pierce = -1, projSpeed = 40, duration = 4, size = 1.4, knockback = 0.8, halfX = 34, halfZ = 22, hitEvery = 0.35, blast = 4.5 },
+		base = { damage = 30, cooldown = 2.5, amount = 3, interval = 0.15, pierce = -1, projSpeed = 40, duration = 4, size = 1.4, knockback = 0.8, halfX = 34, halfZ = 22, hitEvery = 0.35, blast = 4.5, blastFlash = 0.15 },
 	},
 	{
 		id = "hellfire",
@@ -174,7 +174,7 @@ return {
 		from = "fireWand",
 		color = Color3.fromRGB(255, 60, 20),
 		maxLevel = 1,
-		base = { damage = 100, cooldown = 3, amount = 2, interval = 0.25, pierce = -1, projSpeed = 20, range = 60, spread = 0.3, size = 3, knockback = 1.5 },
+		base = { damage = 100, cooldown = 3, amount = 2, interval = 0.25, pierce = -1, projSpeed = 20, range = 60, spread = 0.3, lifetime = 3.5, size = 3, knockback = 1.5 },
 	},
 	{
 		id = "thousandEdge",

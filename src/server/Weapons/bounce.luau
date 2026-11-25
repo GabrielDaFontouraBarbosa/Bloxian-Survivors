@@ -11,8 +11,6 @@ local Common = require(script.Parent.Common)
 
 local Bounce = {}
 
-local BLAST_FLASH = 0.15
-
 function Bounce.shot(run: Runs.Run, slot: Runs.WeaponSlot, w: any, _i: number)
 	local st = slot.state
 	local a = math.random() * math.pi * 2
@@ -34,7 +32,7 @@ local function blast(run: Runs.Run, slot: Runs.WeaponSlot, w: any, at: Vector3)
 	local d = r * 2
 	local disc = FxPool.get("disc", slot.def.color, Vector3.new(0.3, d, d))
 	disc.CFrame = CFrame.new(at.X, run.floorY + 0.4, at.Z) * CFrame.Angles(0, 0, math.rad(90))
-	FxPool.flash(disc, BLAST_FLASH)
+	FxPool.flash(disc, w.blastFlash)
 end
 
 function Bounce.update(run: Runs.Run, slot: Runs.WeaponSlot, w: any, dt: number)
@@ -44,8 +42,8 @@ function Bounce.update(run: Runs.Run, slot: Runs.WeaponSlot, w: any, dt: number)
 	end
 	local y = Common.fxY(run)
 	local center = Common.flat(run.rootPos)
-	local halfX, halfZ = w.halfX or 34, w.halfZ or 22
-	local hitEvery = w.hitEvery or 0.4
+	local halfX, halfZ = w.halfX, w.halfZ
+	local hitEvery = w.hitEvery
 	Common.stepAll(list, dt, function(p)
 		local pos = p.pos + p.dir * w.projSpeed * dt
 		local dx, dz = p.dir.X, p.dir.Z

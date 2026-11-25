@@ -50,6 +50,14 @@ local function ownDescription(player: Player, hum: Humanoid): HumanoidDescriptio
 	if cached then
 		return cached
 	end
+	-- espera o avatar carregar, senao a descricao "original" vem pela metade
+	local deadline = os.clock() + 6
+	while player.Parent and not player:HasAppearanceLoaded() and os.clock() < deadline do
+		task.wait(0.1)
+	end
+	if ownDesc[player] then
+		return ownDesc[player] -- outra chamada pegou enquanto esperava
+	end
 	local ok, desc = pcall(function()
 		return Players:GetHumanoidDescriptionFromUserId(player.UserId)
 	end)

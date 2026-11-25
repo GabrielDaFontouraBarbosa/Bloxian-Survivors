@@ -10,8 +10,6 @@ local Common = require(script.Parent.Common)
 
 local Fireball = {}
 
-local LIFETIME = 3.5
-
 function Fireball.shot(run: Runs.Run, slot: Runs.WeaponSlot, w: any, i: number)
 	local st = slot.state
 	local origin = Common.flat(run.rootPos)
@@ -27,11 +25,11 @@ function Fireball.shot(run: Runs.Run, slot: Runs.WeaponSlot, w: any, i: number)
 		end
 	end
 	-- leque centrado na mira
-	local offset = (i - (w.amount + 1) / 2) * (w.spread or 0.2)
+	local offset = (i - (w.amount + 1) / 2) * w.spread
 	local aim: Vector3 = st.aim
 	local dir = CFrame.Angles(0, offset, 0):VectorToWorldSpace(aim)
 	local part = FxPool.get("fire", slot.def.color, Vector3.one * w.size)
-	local p = Common.newProjectile(part, origin, Common.flat(dir).Unit, LIFETIME, w.pierce, w.size * 0.5 + 0.3)
+	local p = Common.newProjectile(part, origin, Common.flat(dir).Unit, w.lifetime, w.pierce, w.size * 0.5 + 0.3)
 	st.list = st.list or {}
 	table.insert(st.list, p)
 end
