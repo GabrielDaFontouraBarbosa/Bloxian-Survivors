@@ -51,7 +51,14 @@ export type Profile = {
 	quests: { QuestState },
 	adventures: { [string]: number }, -- id -> capitulos completos
 	selected: { class: string, stage: string, arcana: string },
+	settings: Settings,
 }
+
+-- Opcoes do jogador (tela Opcoes). skin: "class" = visual do personagem escolhido,
+-- "own" = o avatar do proprio jogador no Roblox.
+export type Settings = { skin: string }
+
+SaveService.SKIN_CHOICES = { class = true, own = true }
 
 local store: DataStore? = nil
 local profiles: { [Player]: Profile } = {}
@@ -120,6 +127,7 @@ local function defaultProfile(): Profile
 		quests = {},
 		adventures = {},
 		selected = { class = Config.Meta.DefaultClassId, stage = Config.Meta.DefaultStageId, arcana = "" },
+		settings = { skin = Config.Meta.DefaultSkin },
 	}
 end
 
@@ -227,6 +235,12 @@ local function sanitizeV2(data: any, profile: Profile)
 		end
 		if type(sel.arcana) == "string" and (sel.arcana == "" or Content.arcanas[sel.arcana]) then
 			profile.selected.arcana = sel.arcana
+		end
+	end
+	if type(data.settings) == "table" then
+		local skin = (data.settings :: any).skin
+		if type(skin) == "string" and SaveService.SKIN_CHOICES[skin] then
+			profile.settings.skin = skin
 		end
 	end
 end

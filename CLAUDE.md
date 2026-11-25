@@ -42,7 +42,8 @@ src/
 - [x] 4. XP + level up com tela de escolha de 3 upgrades
 - [x] 5. Ondas, dificuldade crescente e chefe
 - [x] 6. Meta-progressão: moedas entre partidas, upgrades permanentes, DataStore
-- [ ] 7. Porte das mecânicas do Vampire Survivors (`PORTE-VS.md`) — código escrito, **falta o playtest** (CONTEXTO.md seção 9)
+- [ ] 7. Porte das mecânicas do Vampire Survivors (`PORTE-VS.md`) — código escrito, **falta o playtest**
+- [ ] 8. Recorte estilo VS: tela de título, 4 personagens + opção de skin, fase Planícies só com morcegos — código escrito, **falta o playtest** (CONTEXTO.md seção 9)
 
 ## Como trabalhar comigo
 - Antes de codar um passo, explique em poucas linhas o plano e quais arquivos vai criar/mudar.

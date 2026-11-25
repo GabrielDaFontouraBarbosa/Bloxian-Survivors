@@ -18,19 +18,12 @@ Jogo no Roblox estilo Vampire Survivors ("bullet heaven"): o jogador só se move
 | Sessão líder + 3 subagentes baratos | Ver AGENTES.md. Economiza tokens. |
 
 ## 3. Estado atual (atualizar a cada passo)
-- Data da última atualização: 2026-10-29
-- Roteiro original (6 passos) concluído. Depois veio o **PORTE DAS MECÂNICAS DO VAMPIRE SURVIVORS** (pedido do usuário, plano em PORTE-VS.md): código ESCRITO e revisado por leitura, **NUNCA RODADO** (sessão na nuvem não dá Play). O primeiro Play vai achar erros de runtime — é esperado; corrigir um por vez.
-- O que o porte tem: runs por jogador em arenas empilhadas (chão infinito); lobby com abas (Jogar/PowerUps/Conquistas/Missões/Aventuras) — PowerUps SÓ no lobby; 9 classes; 9 armas com comportamentos + 9 evoluções (arma máx + passiva + baú); 16 passivas; 16 stats estilo VS; level up 3-4 opções + rerrolar/pular; baús 1/3/5; bestiário sem animação (cabeças flutuantes, morcegos, louva-a-deus...); estágios Floresta Maldita e Cemitério Esquecido com ondas por minuto, revoada, muro de flores, chefes, tochas e Ceifadora aos 30:00; itens de chão; 34 conquistas que liberam conteúdo; missões sem prazo; 7 arcanos; 2 aventuras.
-- Arquitetura nova: Config virou pasta de catálogos (+ índice Content); serviços conversam pelo barramento `Events`; cada serviço guarda estado em `run.data`. PlayerStats→Stats, WaveService→StageService, Hud.client→Main.client + Ui/*.
-- Pendências conhecidas: (1) PLAYTEST do porte (ver "Como testar" no fim deste arquivo); (2) balanceamento é chute (proporções do VS); (3) AnalyticsService não verificado na doc (tudo em pcall); (4) DataStore só persiste em jogo publicado; (5) skins de "armadura", pets-familiares e cidade 3D ainda não feitos (DESIGN.md seção 6).
-- Documentação existente: README.md, CLAUDE.md, CONTEXTO.md, SETUP.md, DESIGN.md, AGENTES.md, RETENCAO.md.
-- Agentes e skills do projeto: criados (4 agentes; skills retention e novo-sistema).
-- Repo: GabrielDaFontouraBarbosa/Bloxian-Survivors (branch main).
-- Jogo RODANDO: o usuário montou Rojo + Studio no Windows em 2026-10-28 e jogou. Passo a passo validado em SETUP.md.
-- NUNCA foi feito playtest pelo Claude nem balanceamento com jogador real. O usuário achou "ficando bom"; nenhum ajuste de Config pedido ainda.
-- Fase atual: playtest do porte VS. TOM/VIBE: Vampire Survivors raiz, gótico, low-poly 3D limpo (DESIGN.md seção 0) — o porte já usa formas góticas simples e luz de lua.
-- MCP do Studio: desligado. ATENÇÃO: de sessão na NUVEM o MCP do Studio é inalcançável (roda no PC do usuário). Ver AGENTES.md seção 6. Os arquivos do VS que o usuário tem ficam no PC dele — a nuvem não alcança (Windows); o porte usou fontes públicas.
-- Bloqueios: nenhum técnico conhecido antes do primeiro Play. Em aberto no design: nome do jogo e fonte dos assets (DESIGN.md seção 4).
+- Data da última atualização: 2026-11-25
+- Roteiro original (6 passos) concluído; depois o **porte VS** (PORTE-VS.md). Em 2026-11-25 o usuário pediu um **RECORTE estilo VS** (passo 8 do CLAUDE.md): tela de título tipo capa do VS (Jogar / PowerUps / Aventuras "em breve" / Conquistas vazia / Opções), 4 personagens inspirados nos 4 primeiros do VS (Caçador=chicote, Vidente=Runa Traçante que quica, Piromante=Varinha de Fogo, Andarilho=facas), opção de skin (avatar próprio x skin do personagem, `SkinService`) e UMA fase, **Planícies**, só com morcegos (5 tipos + revoada, cerco e 3 chefes-morcego).
+- O conteúdo antigo do porte (9 armas, 9 classes, 2 estágios, 34 conquistas, missões, aventuras) saiu dos CATÁLOGOS, não do código: os comportamentos de arma e os serviços continuam. Para voltar algo, recolocar a entrada no `Config` (a versão antiga está no git, commit cd36b18). Missões e arcanos ficaram sem tela.
+- **NADA disso rodou ainda** (sessão na nuvem não dá Play). O primeiro Play vai achar erros de runtime — corrigir um por vez. SkinService usa APIs de HumanoidDescription não testadas aqui (tudo em pcall).
+- Pendências: (1) PLAYTEST (seção 9); (2) balanceamento é chute; (3) AnalyticsService não verificado; (4) DataStore só em jogo publicado; (5) pets e cidade 3D não feitos; (6) nome do jogo ainda placeholder (aparece na capa).
+- Repo: GabrielDaFontouraBarbosa/Bloxian-Survivors. MCP do Studio inalcançável da nuvem (AGENTES.md seção 6).
 
 ## 4. Ainda não decidido (perguntar ao usuário quando o passo exigir; não presumir)
 As decisões de ARTE, LORE e PERSONAGENS migraram para o DESIGN.md (seção 4), que é mais detalhado. Resumo do que falta:
@@ -77,13 +70,12 @@ As decisões de ARTE, LORE e PERSONAGENS migraram para o DESIGN.md (seção 4), 
 ## 8. Primeira ação
 Se for a primeira sessão: criar os agentes (AGENTES.md, seção "Tarefa para o Claude Code agora") e então começar o passo 1 do roteiro. Antes do passo 1, confirmar que o Rojo e o plugin do Rojo no Studio estão instalados; se não estiverem, listar o passo a passo para o usuário.
 
-## 9. Como testar o porte VS (primeiro Play)
-Ordem sugerida, parando no PRIMEIRO erro vermelho do Output (copiar a mensagem inteira, com arquivo e linha, para a sessão):
-1. Play -> deve aparecer o lobby (abas Jogar/PowerUps/Conquistas/Missões/Aventuras) e "[Survivors] Servidor iniciado (porte VS...)" no Output.
-2. Aba Jogar -> Caçador + Floresta Maldita -> JOGAR -> sobe para a arena: chão verde escuro, árvores, luz de lua, HUD (XP no topo, tempo, vida embaixo).
-3. Morcegos e crânios chegam; o chicote golpeia na frente; gemas azuis caem e são puxadas.
-4. Level up -> run pausa, 3 cartas, teclas 1-3 funcionam; pegar Cetro/Adagas e ver os slots no HUD.
-5. 1:30 -> revoada de morcegos vermelhos em linha reta. 3:00 -> Morcego Gigante; matar -> baú -> painel do baú.
-6. Tochas aparecem; quebrar -> moeda/coxa/rosário etc.
-7. Morrer ou Desistir (2 cliques) -> tela de resultado -> "Voltar ao lobby" -> ouro somado; conquistas (Primeiro Sangue...) liberadas; comprar um PowerUp.
-Atalhos para testar rápido (mudar no Config e DESFAZER depois): Stages.forest.duration (Ceifadora antes), events.at (chefe antes), Config.Progression.First (level up mais rápido).
+## 9. Como testar (primeiro Play do recorte)
+Parar no PRIMEIRO erro vermelho do Output e copiar a mensagem inteira (arquivo e linha) para a sessão.
+1. Play -> tela de título: céu de entardecer, lua, morcegos voando, logo, 4 personagens e o menu. Output: "[Survivors] Servidor iniciado (tela de titulo, 4 personagens, Planicies)".
+2. Aventuras -> "Em breve". Conquistas -> "Nenhuma ainda". Voltar funciona.
+3. Opções -> trocar "Minha skin" / "Skin do personagem". Com a do personagem, o boneco perde roupa/acessórios e ganha cor, chapéu e capa.
+4. Jogar -> escolher cada personagem -> COMEÇAR -> Planícies (chão verde, pedras, flores, luz de fim de tarde). Conferir a arma de cada um: chicote na frente; runa quicando nas bordas da tela; 3 bolas de fogo num inimigo aleatório; facas para onde olha.
+5. Só morcegos chegam; 1:30 revoada; 3:00 Morcego Gigante -> baú. 6:00 cerco de morcegos.
+6. Morrer/Desistir -> resultado -> "Voltar ao título" -> ouro somado; PowerUps compráveis.
+Atalhos (mudar no Config e DESFAZER depois): Stages.plains.duration, events.at, Config.Progression.First.

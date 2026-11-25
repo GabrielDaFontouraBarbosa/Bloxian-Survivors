@@ -22,6 +22,8 @@ local BEHAVIORS: { [string]: any } = {
 	aura = require(Behaviors.aura),
 	pool = require(Behaviors.pool),
 	strike = require(Behaviors.strike),
+	bounce = require(Behaviors.bounce),
+	fireball = require(Behaviors.fireball),
 }
 
 -- Chaves de geometria que crescem com a Area.
