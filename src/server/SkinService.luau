@@ -126,14 +126,21 @@ end
 -- Cilindro deitado em pe (o eixo do Cylinder do Roblox e o X).
 local UPRIGHT = CFrame.Angles(0, 0, math.rad(90))
 
-local HATS: { [string]: (Instance, BasePart, Color3) -> () } = {
+local HATS: { [string]: (Instance, BasePart, Color3, any) -> () } = {
 	-- chapeu de aba larga do cacador
-	tricorn = function(folder, head, color)
+	tricorn = function(folder, head, color, skin)
 		local h = head.Size
 		local top = h.Y / 2
-		piece(folder, Vector3.new(0.18, h.X * 2.1, h.X * 2.1), color, head, CFrame.new(0, top + 0.05, 0) * UPRIGHT, Enum.PartType.Cylinder)
-		piece(folder, Vector3.new(0.7, h.X * 1.05, h.X * 1.05), color, head, CFrame.new(0, top + 0.4, 0) * UPRIGHT, Enum.PartType.Cylinder)
-		piece(folder, Vector3.new(0.12, h.X * 1.08, h.X * 1.08), Color3.fromRGB(150, 30, 30), head, CFrame.new(0, top + 0.16, 0) * UPRIGHT, Enum.PartType.Cylinder)
+		-- aba larga levemente inclinada para a frente + copa + fita
+		local tilt = CFrame.Angles(math.rad(-6), 0, 0)
+		piece(folder, Vector3.new(0.16, h.X * 2.2, h.X * 2.2), color, head, CFrame.new(0, top + 0.02, -0.05) * tilt * UPRIGHT, Enum.PartType.Cylinder, Enum.Material.Leather)
+		piece(folder, Vector3.new(0.75, h.X * 1.02, h.X * 1.02), color, head, CFrame.new(0, top + 0.42, 0.02) * tilt * UPRIGHT, Enum.PartType.Cylinder, Enum.Material.Leather)
+		piece(folder, Vector3.new(0.14, h.X * 1.06, h.X * 1.06), skin.band or Color3.fromRGB(150, 30, 30), head, CFrame.new(0, top + 0.16, 0.01) * tilt * UPRIGHT, Enum.PartType.Cylinder, Enum.Material.Fabric)
+		if skin.feather then
+			-- pena presa na fita, apontando para tras e para cima
+			piece(folder, Vector3.new(0.1, 0.28, h.X * 1.4), skin.feather, head, CFrame.new(h.X * 0.48, top + 0.5, h.Z * 0.35) * CFrame.Angles(math.rad(30), math.rad(-18), 0), nil, Enum.Material.Fabric)
+			piece(folder, Vector3.new(0.06, 0.16, h.X * 0.9), skin.band or color, head, CFrame.new(h.X * 0.5, top + 0.58, h.Z * 0.5) * CFrame.Angles(math.rad(30), math.rad(-18), 0), nil, Enum.Material.Fabric)
+		end
 	end,
 	-- capuz: topo, nuca e laterais (o rosto fica livre)
 	hood = function(folder, head, color)
@@ -174,6 +181,109 @@ local function addCape(folder: Instance, char: Model, color: Color3)
 	piece(folder, Vector3.new(t.X * 1.05, height, 0.12), color, torso, offset, nil, Enum.Material.Fabric)
 end
 
+
+-- ====== roupas completas (pecas por cima do corpo: casaco, botas, luvas...) ======
+-- Cada peca e uma "casca" um pouco maior que a parte do corpo, soldada nela, ou um
+-- enfeite (aba, gola, fivela). Tamanhos relativos a parte, entao serve em
+-- qualquer escala de avatar. Funciona em R15; em R6 usa as partes grandes.
+
+local function bodyPart(char: Model, r15: string, r6: string): BasePart?
+	local p = char:FindFirstChild(r15) or char:FindFirstChild(r6)
+	return if p and p:IsA("BasePart") then p else nil
+end
+
+local OUTFITS: { [string]: (Instance, Model, any) -> () } = {
+	-- Cacador: casaco longo com abas, gola alta, manto nos ombros, cinto com
+	-- fivela, punhos dobrados, luvas e botas de cano alto.
+	hunter = function(folder, char, skin)
+		local coat, trim, leather, metal = skin.shirt, skin.trim, skin.leather, skin.metal
+		local fabric, hide = Enum.Material.Fabric, Enum.Material.Leather
+		local isR15 = char:FindFirstChild("UpperTorso") ~= nil
+		local upper = bodyPart(char, "UpperTorso", "Torso")
+		local lower = bodyPart(char, "LowerTorso", "Torso")
+
+		if upper then
+			local t = upper.Size
+			local shellY = if isR15 then 0 else t.Y * 0.08
+			piece(folder, Vector3.new(t.X * 1.1, if isR15 then t.Y * 1.04 else t.Y * 0.84, t.Z * 1.2), coat, upper, CFrame.new(0, shellY, 0), nil, fabric)
+			-- camisa aparecendo no decote em V + lapelas
+			piece(folder, Vector3.new(t.X * 0.26, t.Y * 0.5, 0.06), skin.inner, upper, CFrame.new(0, t.Y * 0.22, -t.Z * 0.61), nil, fabric)
+			for _, sx in { -1, 1 } do
+				piece(folder, Vector3.new(t.X * 0.2, t.Y * 0.62, 0.08), trim, upper, CFrame.new(sx * t.X * 0.17, t.Y * 0.16, -t.Z * 0.63) * CFrame.Angles(0, 0, math.rad(sx * 16)), nil, fabric)
+			end
+			-- botoes
+			for i = 0, 2 do
+				piece(folder, Vector3.one * 0.18, metal, upper, CFrame.new(-t.X * 0.06, -t.Y * 0.1 - i * t.Y * 0.16, -t.Z * 0.64), Enum.PartType.Ball, Enum.Material.Metal)
+			end
+			-- gola alta atras do pescoco
+			piece(folder, Vector3.new(t.X * 0.85, t.Y * 0.38, 0.16), coat, upper, CFrame.new(0, t.Y * 0.62, t.Z * 0.42) * CFrame.Angles(math.rad(-14), 0, 0), nil, fabric)
+			-- manto enrolado nos ombros (cilindro deitado: fica arredondado)
+			piece(folder, Vector3.new(t.X * 1.32, t.Z * 0.8, t.Z * 0.8), trim, upper, CFrame.new(0, t.Y * 0.4, t.Z * 0.12), Enum.PartType.Cylinder, fabric)
+		end
+
+		if lower then
+			local l = lower.Size
+			-- no R6 o "quadril" e a parte de baixo do Torso
+			local hipY = if isR15 then 0 else -l.Y * 0.38
+			local beltY = if isR15 then l.Y * 0.22 else -l.Y * 0.32
+			if isR15 then
+				piece(folder, Vector3.new(l.X * 1.14, l.Y, l.Z * 1.22), coat, lower, CFrame.new(0, -0.02, 0), nil, fabric)
+			end
+			piece(folder, Vector3.new(l.X * 1.17, 0.3, l.Z * 1.27), leather, lower, CFrame.new(0, beltY, 0), nil, hide)
+			piece(folder, Vector3.new(0.45, 0.36, 0.1), metal, lower, CFrame.new(0, beltY, -l.Z * 0.66), nil, Enum.Material.Metal)
+			-- abas do casaco: duas atras, duas na frente (abertas no meio, como sobretudo)
+			local h = l.X * 1.3
+			local top = hipY - l.Y * 0.1
+			for _, sx in { -1, 1 } do
+				piece(folder, Vector3.new(l.X * 0.56, h, 0.12), coat, lower, CFrame.new(sx * l.X * 0.28, top - h / 2, l.Z * 0.63) * CFrame.Angles(math.rad(7), 0, math.rad(sx * 4)), nil, fabric)
+				piece(folder, Vector3.new(l.X * 0.4, h * 0.92, 0.12), coat, lower, CFrame.new(sx * l.X * 0.35, top - h * 0.46, -l.Z * 0.63) * CFrame.Angles(math.rad(-6), 0, math.rad(sx * 5)), nil, fabric)
+				-- barra escura nas abas
+				piece(folder, Vector3.new(l.X * 0.57, 0.18, 0.14), trim, lower, CFrame.new(sx * l.X * 0.28, top - h + 0.1, l.Z * 0.7) * CFrame.Angles(math.rad(7), 0, math.rad(sx * 4)), nil, fabric)
+			end
+		end
+
+		-- bracos: punho dobrado + luva
+		for _, side in { "Left", "Right" } do
+			local lowerArm = char:FindFirstChild(side .. "LowerArm")
+			local hand = char:FindFirstChild(side .. "Hand")
+			if lowerArm and lowerArm:IsA("BasePart") and hand and hand:IsA("BasePart") then
+				local a = lowerArm.Size
+				piece(folder, Vector3.new(0.32, a.X * 1.4, a.X * 1.4), trim, lowerArm, CFrame.new(0, -a.Y * 0.3, 0) * UPRIGHT, Enum.PartType.Cylinder, fabric)
+				piece(folder, hand.Size * 1.15, leather, hand, CFrame.new(), nil, hide)
+			else
+				local arm = char:FindFirstChild(side .. " Arm")
+				if arm and arm:IsA("BasePart") then
+					local a = arm.Size
+					piece(folder, Vector3.new(0.3, a.X * 1.35, a.X * 1.35), trim, arm, CFrame.new(0, -a.Y * 0.18, 0) * UPRIGHT, Enum.PartType.Cylinder, fabric)
+					piece(folder, Vector3.new(a.X * 1.12, a.Y * 0.28, a.Z * 1.12), leather, arm, CFrame.new(0, -a.Y * 0.37, 0), nil, hide)
+				end
+			end
+		end
+
+		-- pernas: botas de cano alto com a borda dobrada
+		for _, side in { "Left", "Right" } do
+			local shin = char:FindFirstChild(side .. "LowerLeg")
+			local foot = char:FindFirstChild(side .. "Foot")
+			if shin and shin:IsA("BasePart") then
+				local g = shin.Size
+				piece(folder, Vector3.new(g.X * 1.18, g.Y * 0.95, g.Z * 1.18), leather, shin, CFrame.new(0, -g.Y * 0.03, 0), nil, hide)
+				piece(folder, Vector3.new(0.34, g.X * 1.45, g.X * 1.45), trim, shin, CFrame.new(0, g.Y * 0.42, 0) * UPRIGHT, Enum.PartType.Cylinder, hide)
+				if foot and foot:IsA("BasePart") then
+					local f = foot.Size
+					piece(folder, Vector3.new(f.X * 1.15, f.Y * 1.2, f.Z * 1.25), leather, foot, CFrame.new(0, 0, -f.Z * 0.1), nil, hide)
+				end
+			else
+				local leg = char:FindFirstChild(side .. " Leg")
+				if leg and leg:IsA("BasePart") then
+					local g = leg.Size
+					piece(folder, Vector3.new(g.X * 1.12, g.Y * 0.5, g.Z * 1.15), leather, leg, CFrame.new(0, -g.Y * 0.26, -0.03), nil, hide)
+					piece(folder, Vector3.new(0.3, g.X * 1.4, g.X * 1.4), trim, leg, CFrame.new(0, 0, 0) * UPRIGHT, Enum.PartType.Cylinder, hide)
+				end
+			end
+		end
+	end,
+}
+
 local function removeCostume(char: Model)
 	local old = char:FindFirstChild(COSTUME)
 	if old then
@@ -191,10 +301,14 @@ local function addCostume(char: Model, skin: any)
 	folder.Name = COSTUME
 	local hat = HATS[skin.hat]
 	if hat then
-		hat(folder, head, skin.hatColor or skin.shirt)
+		hat(folder, head, skin.hatColor or skin.shirt, skin)
 	end
 	if skin.cape then
 		addCape(folder, char, skin.cape)
+	end
+	local outfit = skin.outfit and OUTFITS[skin.outfit]
+	if outfit then
+		outfit(folder, char, skin)
 	end
 	folder.Parent = char
 end

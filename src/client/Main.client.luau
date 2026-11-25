@@ -16,6 +16,7 @@ local Chest = require(Ui:WaitForChild("Chest"))
 local Results = require(Ui:WaitForChild("Results"))
 local Toast = require(Ui:WaitForChild("Toast"))
 local Scenery = require(script.Parent:WaitForChild("Scenery"))
+local WeaponFx = require(script.Parent:WaitForChild("WeaponFx"))
 
 local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
@@ -28,6 +29,7 @@ local levelUpOffer = Remotes.event("LevelUpOffer")
 local chestOpened = Remotes.event("ChestOpened")
 local toast = Remotes.event("Toast")
 local notice = Remotes.event("Notice")
+local weaponFx = Remotes.event("WeaponFx")
 -- cliente -> servidor
 local requestProfile = Remotes.event("RequestProfile")
 local requestStartRun = Remotes.event("RequestStartRun")
@@ -51,6 +53,7 @@ local function refreshLobby()
 end
 
 Toast.init(playerGui)
+WeaponFx.init()
 Lobby.init(playerGui, {
 	start = function(req)
 		requestStartRun:FireServer(req)
@@ -112,6 +115,7 @@ runState.OnClientEvent:Connect(function(data)
 		LevelUp.hide()
 		Chest.hide()
 		Scenery.leave()
+		WeaponFx.clear()
 	end
 	refreshLobby()
 end)
@@ -119,6 +123,7 @@ end)
 runSync.OnClientEvent:Connect(function(data)
 	if inRun then
 		Hud.update(data)
+		WeaponFx.setLoadout(data.weapons)
 	end
 end)
 
@@ -146,6 +151,7 @@ end)
 
 toast.OnClientEvent:Connect(Toast.event)
 notice.OnClientEvent:Connect(Toast.notice)
+weaponFx.OnClientEvent:Connect(WeaponFx.event)
 
 refreshLobby()
 requestProfile:FireServer() -- caso o ProfileSync do join tenha chegado antes das telas

@@ -8,7 +8,9 @@
 --   default = ja vem liberada E comprada. As outras: uma conquista libera, o ouro compra (price).
 --   skin:  visual do personagem (server/SkinService), usado quando o jogador escolhe
 --          "skin do personagem" nas Opcoes. Cores do corpo + chapeu e capa de pecas simples.
---            hat: "tricorn" | "hood" | "wizard" | "bandana"
+--            hat: "tricorn" | "hood" | "wizard" | "bandana"  (feather/band = enfeites do chapeu)
+--            outfit: roupa completa por cima do corpo (casaco, botas, luvas...), ver
+--                    OUTFITS no SkinService. Hoje so o "hunter" tem.
 --
 -- Conjunto atual (pedido do usuario, 2026-11): os 4 primeiros personagens do VS,
 -- INSPIRADOS (nome, visual e numeros proprios), um para cada arma inicial.
@@ -27,11 +29,18 @@ return {
 		color = Color3.fromRGB(200, 170, 120),
 		skin = {
 			skinTone = Color3.fromRGB(234, 184, 146),
-			shirt = Color3.fromRGB(110, 40, 40),
-			pants = Color3.fromRGB(60, 45, 35),
+			shirt = Color3.fromRGB(125, 30, 38), -- casaco (mangas usam essa cor)
+			pants = Color3.fromRGB(55, 42, 34),
+			inner = Color3.fromRGB(225, 212, 188), -- camisa no decote
+			trim = Color3.fromRGB(70, 18, 24), -- lapelas, manto, punhos, barra
+			leather = Color3.fromRGB(48, 32, 24), -- cinto, luvas, botas
+			metal = Color3.fromRGB(215, 175, 80), -- fivela e botoes
 			hat = "tricorn",
-			hatColor = Color3.fromRGB(45, 32, 25),
-			cape = Color3.fromRGB(80, 20, 30),
+			hatColor = Color3.fromRGB(40, 28, 22),
+			band = Color3.fromRGB(150, 28, 36),
+			feather = Color3.fromRGB(235, 232, 220),
+			outfit = "hunter",
+			cape = nil,
 		},
 	},
 	{

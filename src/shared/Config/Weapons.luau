@@ -13,6 +13,9 @@
 -- de chefe = vira `evolution.into` (entrada com evolved = true, nivel unico).
 -- default = liberada desde o inicio; as outras vem de conquistas.
 -- rarity = peso no sorteio do level up (maior = aparece mais).
+-- fx (opcional) = visual/som desenhado no cliente (client/WeaponFx). Som: id de
+--   asset ("rbxassetid://123") ou arquivo embutido do Roblox ("rbxasset://sounds/...");
+--   "" = sem som. Trocar o som = trocar o id aqui.
 --
 -- Conjunto atual (pedido do usuario, 2026-11): as 4 armas dos 4 primeiros
 -- personagens, INSPIRADAS no VS (mecanica parecida, nome e numeros proprios).
@@ -49,6 +52,14 @@ return {
 			"+5 de dano.",
 		},
 		evolution = { passive = "hollowHeart", into = "bloodyWhip" },
+		fx = {
+			handle = Color3.fromRGB(70, 45, 30),
+			lash = Color3.fromRGB(120, 80, 50),
+			crack = Color3.fromRGB(255, 235, 180),
+			swingSound = "rbxasset://sounds/swordslash.wav",
+			crackSound = "rbxasset://sounds/swordslash.wav",
+			volume = 0.6,
+		},
 	},
 	{
 		id = "runetracer",
@@ -153,6 +164,14 @@ return {
 		color = Color3.fromRGB(200, 30, 50),
 		maxLevel = 1,
 		base = { damage = 35, cooldown = 1.2, area = 1.4, amount = 2, interval = 0.1, knockback = 1.2, length = 8, width = 2.6, crit = 0.3, critMult = 2, lifesteal = 1 },
+		fx = {
+			handle = Color3.fromRGB(40, 20, 20),
+			lash = Color3.fromRGB(150, 20, 35),
+			crack = Color3.fromRGB(255, 60, 80),
+			swingSound = "rbxasset://sounds/swordslash.wav",
+			crackSound = "rbxasset://sounds/swordslash.wav",
+			volume = 0.7,
+		},
 	},
 	{
 		id = "endRune",

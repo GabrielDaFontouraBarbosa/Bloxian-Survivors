@@ -1,15 +1,20 @@
 --!strict
 -- Chicote: golpe retangular na frente do jogador; golpes pares vao para tras.
 -- Evolucao (Acoite Sangrento): critico + cura `lifesteal` por inimigo atingido.
+-- O acerto e decidido aqui; o VISUAL (laco que se desenrola, braco, estalo e som)
+-- e desenhado no cliente (client/WeaponFx) a partir do evento WeaponFx.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Runs = require(script.Parent.Parent.Runs)
 local EnemyService = require(script.Parent.Parent.EnemyService)
 local PlayerHealth = require(script.Parent.Parent.PlayerHealth)
-local FxPool = require(script.Parent.Parent.FxPool)
 local Common = require(script.Parent.Common)
 
 local Whip = {}
 
 local MAX_HEALS_PER_SWING = 4
+
+local weaponFx = Remotes.event("WeaponFx")
 
 function Whip.shot(run: Runs.Run, slot: Runs.WeaponSlot, w: any, i: number)
 	local facing = run.facing
@@ -31,15 +36,20 @@ function Whip.shot(run: Runs.Run, slot: Runs.WeaponSlot, w: any, i: number)
 			end
 		end
 	end)
-	local y = Common.fxY(run)
-	local here = Vector3.new(center.X, y, center.Z)
-	local part = FxPool.get("slash", slot.def.color, Vector3.new(width * 0.45, 0.25, len))
-	part.CFrame = CFrame.lookAt(here, here + facing)
-	FxPool.flash(part, 0.12)
+	-- so o dono ve (cada run e solo, numa arena propria)
+	weaponFx:FireClient(run.player, {
+		kind = "whip",
+		weapon = slot.def.id,
+		dir = facing,
+		length = len,
+		width = width,
+		floorY = run.floorY,
+		back = i % 2 == 0,
+	})
 end
 
 function Whip.release(_run: Runs.Run, _slot: Runs.WeaponSlot)
-	-- golpes somem sozinhos (FxPool.flash)
+	-- nada para recolher: o visual vive no cliente e some sozinho
 end
 
 return Whip
