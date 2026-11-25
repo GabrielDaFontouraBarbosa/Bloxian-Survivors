@@ -20,6 +20,13 @@ Decorre daí (detalhar quando cada um for implementado):
 
 ---
 
+## 0.1 Recorte de 2026-11-25 — DECIDIDO pelo usuário
+
+- **Capa / tela de título** no estilo da tela inicial do VS: céu de entardecer, lua, morcegos voando, logo grande e os personagens enfileirados. Feita só com GUI (sem imagem externa). O nome no logo ainda é o placeholder.
+- **4 personagens**, inspirados nos 4 primeiros do VS, nome e visual próprios: Caçador (chicote), Vidente (Runa Traçante), Piromante (Varinha de Fogo), Andarilho (facas).
+- **Skin:** o jogador escolhe nas Opções entre o **próprio avatar** e a **skin do personagem** (corpo pintado + chapéu + capa de peças simples). O padrão é a skin do personagem. Isso substitui, por enquanto, a ideia de "armadura = skin" da seção 6.
+- **Fase única: Planícies**, campo aberto ao entardecer, **todo inimigo é morcego** (a variedade vem do tipo: vampiro, crepúsculo, ancião, sombrio + chefes).
+
 ## 1. A pergunta central: personagens desbloqueáveis ou um boneco que upa?
 
 **Decisão de rumo (2026-10-28): os dois, em ordem — e personagem tratado como DADO desde já.**

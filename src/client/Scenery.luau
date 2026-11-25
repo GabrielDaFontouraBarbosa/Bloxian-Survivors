@@ -1,6 +1,6 @@
 --!strict
--- Cenario da run SO NO CLIENTE (puro visual, sem colisao): arvores (floresta)
--- ou tumulos (cemiterio) numa grade em volta do jogador. Cada celula usa um
+-- Cenario da run SO NO CLIENTE (puro visual, sem colisao): campo aberto
+-- (planicies), arvores (floresta) ou tumulos (cemiterio) numa grade em volta do jogador. Cada celula usa um
 -- hash fixo, entao o mapa infinito e sempre igual no mesmo lugar. Mais a luz de
 -- lua e neblina. Ao voltar ao lobby a luz original e restaurada.
 local Lighting = game:GetService("Lighting")
@@ -12,6 +12,7 @@ local Scenery = {}
 local CELL = 26 -- tamanho da celula (studs)
 local RADIUS = 125 -- ate onde espalha
 local DENSITY = 0.38 -- chance de ter algo na celula
+local DENSITY_BY_KIND: { [string]: number } = { plains = 0.32 } -- campo aberto: mais espaco
 local UPDATE_EVERY = 0.25
 
 local player = Players.LocalPlayer
@@ -74,6 +75,22 @@ local function build(what: string): Model
 		local stone = part(Vector3.new(2.4, 3, 0.6), Color3.fromRGB(105, 105, 115), CFrame.new(0, 1.5, 0), m, false, Enum.Material.Slate)
 		m.PrimaryPart = stone
 		part(Vector3.new(3, 0.3, 4), Color3.fromRGB(60, 55, 50), CFrame.new(0, 0.15, 1.6), m, false, Enum.Material.Ground)
+	elseif what == "rock" then
+		local rock = part(Vector3.new(2.6, 1.4, 2), Color3.fromRGB(120, 118, 110), CFrame.new(0, 0.7, 0) * CFrame.Angles(0, 0, math.rad(8)), m, false, Enum.Material.Slate)
+		m.PrimaryPart = rock
+		part(Vector3.new(1.3, 0.9, 1.2), Color3.fromRGB(105, 103, 96), CFrame.new(1.5, 0.45, 0.6), m, false, Enum.Material.Slate)
+	elseif what == "flowers" then
+		local tuft = part(Vector3.new(2.2, 0.6, 2.2), Color3.fromRGB(70, 120, 50), CFrame.new(0, 0.3, 0), m, true, Enum.Material.Grass)
+		m.PrimaryPart = tuft
+		local colors = { Color3.fromRGB(240, 220, 90), Color3.fromRGB(230, 120, 160), Color3.fromRGB(245, 245, 240) }
+		for i = 1, 5 do
+			local a = i * 1.3
+			part(Vector3.one * 0.45, colors[(i % #colors) + 1], CFrame.new(math.cos(a) * 0.8, 0.75, math.sin(a) * 0.8), m, true, Enum.Material.SmoothPlastic)
+		end
+	elseif what == "lonelyTree" then
+		local trunk = part(Vector3.new(1.2, 6, 1.2), Color3.fromRGB(85, 60, 40), CFrame.new(0, 3, 0), m, false, Enum.Material.Wood)
+		m.PrimaryPart = trunk
+		part(Vector3.new(8, 4, 8), Color3.fromRGB(70, 115, 50), CFrame.new(0, 7, 0), m, true, Enum.Material.Grass)
 	else -- "bush"
 		local bush = part(Vector3.one * 3, Color3.fromRGB(30, 58, 32), CFrame.new(0, 1.2, 0), m, true, Enum.Material.Grass)
 		m.PrimaryPart = bush
@@ -83,6 +100,9 @@ end
 
 -- O que nasce numa celula, por estagio.
 local function pick(r: number): string
+	if kind == "plains" then
+		return if r < 0.12 then "lonelyTree" elseif r < 0.32 then "bush" elseif r < 0.55 then "rock" else "flowers"
+	end
 	if kind == "graves" then
 		return if r < 0.6 then "grave" else "deadTree"
 	end
@@ -123,7 +143,7 @@ local function refresh()
 	for cx = cx0 - span, cx0 + span do
 		for cz = cz0 - span, cz0 + span do
 			local dx, dz = (cx - cx0) * CELL, (cz - cz0) * CELL
-			if dx * dx + dz * dz <= RADIUS * RADIUS and hash(cx, cz, 1) < DENSITY then
+			if dx * dx + dz * dz <= RADIUS * RADIUS and hash(cx, cz, 1) < (DENSITY_BY_KIND[kind] or DENSITY) then
 				local key = cellKey(cx, cz)
 				wanted[key] = true
 				if not placed[key] then
@@ -153,23 +173,24 @@ local function saveAndSetLighting(stage: string)
 	for _, key in LIGHTING_KEYS do
 		(savedLighting :: any)[key] = (Lighting :: any)[key]
 	end
-	Lighting.ClockTime = 0
-	Lighting.Brightness = 1.2
-	Lighting.Ambient = Color3.fromRGB(50, 45, 70)
-	Lighting.OutdoorAmbient = Color3.fromRGB(60, 55, 85)
-	Lighting.FogStart = 70
-	Lighting.FogEnd = 230
-	Lighting.FogColor = if stage == "graves" then Color3.fromRGB(25, 25, 32) else Color3.fromRGB(12, 14, 20)
+	local dusk = stage == "plains" -- planicies: entardecer dourado; o resto: noite de lua
+	Lighting.ClockTime = if dusk then 17.7 else 0
+	Lighting.Brightness = if dusk then 2 else 1.2
+	Lighting.Ambient = if dusk then Color3.fromRGB(95, 75, 70) else Color3.fromRGB(50, 45, 70)
+	Lighting.OutdoorAmbient = if dusk then Color3.fromRGB(130, 105, 95) else Color3.fromRGB(60, 55, 85)
+	Lighting.FogStart = if dusk then 110 else 70
+	Lighting.FogEnd = if dusk then 320 else 230
+	Lighting.FogColor = if dusk then Color3.fromRGB(190, 130, 90) elseif stage == "graves" then Color3.fromRGB(25, 25, 32) else Color3.fromRGB(12, 14, 20)
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
 	if atmosphere then
 		savedAtmosphere = {}
 		for _, key in ATMOSPHERE_KEYS do
 			(savedAtmosphere :: any)[key] = (atmosphere :: any)[key]
 		end
-		atmosphere.Density = 0.42
+		atmosphere.Density = if dusk then 0.3 else 0.42
 		atmosphere.Offset = 0
-		atmosphere.Color = Color3.fromRGB(25, 22, 40)
-		atmosphere.Decay = Color3.fromRGB(15, 10, 30)
+		atmosphere.Color = if dusk then Color3.fromRGB(230, 160, 110) else Color3.fromRGB(25, 22, 40)
+		atmosphere.Decay = if dusk then Color3.fromRGB(120, 70, 90) else Color3.fromRGB(15, 10, 30)
 		atmosphere.Glare = 0
 		atmosphere.Haze = 2
 	end

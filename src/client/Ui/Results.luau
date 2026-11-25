@@ -1,6 +1,6 @@
 --!strict
 -- Tela de fim de run: como acabou, tempo, nivel, abates, ouro levado para casa,
--- armas finais e conquistas liberadas. "Voltar ao lobby" fecha.
+-- armas finais e conquistas liberadas. "Voltar ao título" fecha.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -105,7 +105,7 @@ function Results.init(parent: Instance, close: () -> ())
 		Size = UDim2.new(1, 0, 1, -116),
 		Position = UDim2.fromOffset(0, 60),
 	}, panel)
-	local button = Theme.button("Voltar ao lobby", {
+	local button = Theme.button("Voltar ao título", {
 		Size = UDim2.new(1, 0, 0, 44),
 		Position = UDim2.new(0, 0, 1, -44),
 		BackgroundColor3 = C.accent,

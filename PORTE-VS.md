@@ -4,6 +4,8 @@ Plano do porte pedido em 2026-10-28: estudar o Vampire Survivors (VS) e trazer a
 
 Fonte: wiki e guias públicos do VS (os arquivos do jogo estão no PC do usuário, fora do alcance da sessão na nuvem).
 
+> **2026-11-25 — recorte.** O usuário pediu uma versão menor e mais fiel ao começo do VS: tela de título, 4 personagens (chicote, Runa Traçante, Varinha de Fogo, facas), skin própria x do personagem e uma fase (Planícies) só com morcegos. Os catálogos foram enxugados; a arquitetura abaixo continua valendo. Ver CONTEXTO.md seção 3.
+
 ---
 
 ## 1. Mapa VS -> Bloxian

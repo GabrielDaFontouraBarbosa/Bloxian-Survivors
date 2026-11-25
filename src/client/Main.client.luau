@@ -1,5 +1,5 @@
 --!strict
--- Ponto de entrada do cliente: monta as telas (lobby, HUD, level up, bau,
+-- Ponto de entrada do cliente: monta as telas (titulo/lobby, HUD, level up, bau,
 -- resultado, avisos), o cenario da run e liga os RemoteEvents.
 -- O cliente so mostra e pede; o servidor decide e valida tudo.
 local Players = game:GetService("Players")
@@ -40,6 +40,7 @@ local chooseUpgrade = Remotes.event("ChooseUpgrade")
 local rerollUpgrade = Remotes.event("RerollUpgrade")
 local skipUpgrade = Remotes.event("SkipUpgrade")
 local chestContinue = Remotes.event("ChestContinue")
+local setOption = Remotes.event("SetOption")
 
 local inRun = false
 local showingResults = false
@@ -65,6 +66,9 @@ Lobby.init(playerGui, {
 	end,
 	claimQuest = function(index)
 		claimQuest:FireServer(index)
+	end,
+	setOption = function(key, value)
+		setOption:FireServer(key, value)
 	end,
 })
 Hud.init(playerGui, function()
@@ -101,7 +105,7 @@ runState.OnClientEvent:Connect(function(data)
 		Results.hide()
 		Hud.setVisible(true)
 		local stage = Content.stages[data.stage]
-		Scenery.enter(if stage then stage.scenery else "forest", data.floorY)
+		Scenery.enter(if stage then stage.scenery else "plains", data.floorY)
 	else
 		inRun = false
 		Hud.setVisible(false)

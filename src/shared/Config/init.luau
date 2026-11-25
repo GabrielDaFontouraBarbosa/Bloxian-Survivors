@@ -91,7 +91,8 @@ Config.Meta = {
 	PowerUpMarkup = 0.1, -- cada rank comprado encarece todos os PowerUps em 10%
 	QuestSlots = 3,
 	DefaultClassId = "hunter",
-	DefaultStageId = "forest",
+	DefaultStageId = "plains",
+	DefaultSkin = "class", -- "class" = skin do personagem; "own" = avatar do jogador (Opcoes)
 }
 
 -- Catalogos de conteudo (cada um e uma lista de entradas com `id`).

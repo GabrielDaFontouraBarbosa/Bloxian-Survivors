@@ -4,6 +4,7 @@
 --   * PowerUps: compra (custo cresce com cada rank comprado) e reembolso total
 --   * Classes: comprar com ouro as que uma conquista liberou
 --   * Missoes: resgatar recompensa
+--   * Opcoes: preferencias do jogador (hoje: skin propria x skin do personagem)
 --   * ProfileSync: manda ao cliente o retrato do perfil para montar o lobby
 -- Toda acao e validada aqui contra o perfil; o cliente so pede.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -17,6 +18,7 @@ local RunManager = require(script.Parent.RunManager)
 local QuestService = require(script.Parent.QuestService)
 local RateLimit = require(script.Parent.RateLimit)
 local Analytics = require(script.Parent.Analytics)
+local SkinService = require(script.Parent.SkinService)
 
 local MetaService = {}
 
@@ -26,6 +28,7 @@ local buyPowerUp = Remotes.event("BuyPowerUp")
 local refundPowerUps = Remotes.event("RefundPowerUps")
 local buyClass = Remotes.event("BuyClass")
 local claimQuest = Remotes.event("ClaimQuest")
+local setOption = Remotes.event("SetOption")
 local notice = Remotes.event("Notice")
 
 -- Retrato do perfil para o lobby (so dados; nomes/textos o cliente tira do Content).
@@ -76,6 +79,7 @@ local function snapshot(player: Player, profile: SaveService.Profile): any
 		achievements = table.clone(profile.achievements),
 		quests = quests,
 		selected = table.clone(profile.selected),
+		settings = table.clone(profile.settings),
 		stats = {
 			kills = profile.stats.kills,
 			runs = profile.stats.runs,
@@ -187,6 +191,27 @@ function MetaService.init()
 		local gold = QuestService.claim(player, index)
 		if gold > 0 then
 			notice:FireClient(player, ("Missão resgatada: +%d de ouro!"):format(gold))
+		end
+		MetaService.sync(player)
+	end)
+
+	-- Opcoes: (chave, valor) validados aqui. Pode mudar tambem durante a run.
+	setOption.OnServerEvent:Connect(function(player, key, value)
+		if not RateLimit.allow(player, "setOption", 0.3) then
+			return
+		end
+		local profile = SaveService.peek(player)
+		if not profile then
+			return
+		end
+		if key == "skin" and type(value) == "string" and SaveService.SKIN_CHOICES[value] then
+			if profile.settings.skin ~= value then
+				profile.settings.skin = value
+				SaveService.markDirty(player)
+				task.spawn(SkinService.refresh, player)
+			end
+		else
+			return -- opcao inventada pelo cliente
 		end
 		MetaService.sync(player)
 	end)

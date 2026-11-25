@@ -1,12 +1,16 @@
 --!strict
--- Lobby (a "cidade" provisoria ate existir o mapa 3D): tudo fora da partida.
---   Jogar      -> classe, estagio, arcano e o botao JOGAR
---   PowerUps   -> loja permanente (so aqui, nunca dentro da run)
---   Conquistas -> lista com o que cada uma libera
---   Missoes    -> 3 objetivos sem prazo, resgate de ouro
---   Aventuras  -> capitulos com regras proprias
+-- Tela de titulo (a "capa" do jogo, no estilo da tela inicial do VS) e tudo que
+-- acontece fora da partida. Telas:
+--   title        -> logo, os personagens, menu: Jogar / PowerUps / Aventuras / Conquistas / Opcoes
+--   select       -> escolha do personagem + fase, botao COMECAR
+--   shop         -> PowerUps (loja permanente; so aqui, nunca dentro da run)
+--   adventures   -> "Em breve"
+--   achievements -> lista de conquistas (hoje vazia, de proposito)
+--   options      -> skin propria x skin do personagem
 -- So mostra e pede: o servidor valida tudo (MetaService/RunManager).
+-- O nome do modulo continua "Lobby" para nao mexer no resto do cliente.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
@@ -21,43 +25,172 @@ export type Actions = {
 	refund: () -> (),
 	buyClass: (id: string) -> (),
 	claimQuest: (index: number) -> (),
+	setOption: (key: string, value: any) -> (),
 }
 
 local C = Theme.C
 
+-- Nome provisorio (DESIGN.md secao 4: nome do jogo ainda em aberto).
+local GAME_TITLE_TOP = "BLOXIAN"
+local GAME_TITLE_BOTTOM = "SURVIVORS"
+
 local gui: ScreenGui
-local content: Frame
+local screenRoot: Frame -- onde cada tela e desenhada
 local goldLabel: TextLabel
-local tabButtons: { [string]: TextButton } = {}
 local actions: Actions
 local profile: any = nil
-local current = "play"
-local sel = { class = "", stage = "", arcana = "" }
+local current = "title"
+local sel = { class = "", stage = "" }
+local batsConn: RBXScriptConnection? = nil
 
--- Quem libera cada coisa (para o texto de "bloqueado").
-local requirement: { [string]: { [string]: any } } = {}
-for _, ach in Config.Achievements do
-	local r = ach.reward
-	if r and r.kind ~= "gold" and r.id then
-		requirement[r.kind] = requirement[r.kind] or {}
-		requirement[r.kind][r.id] = ach
+-- ===================== pecas visuais =====================
+
+local function rect(parent: Instance, x: number, y: number, w: number, h: number, color: Color3, round: number?): Frame
+	local f = Theme.frame({
+		Position = UDim2.fromScale(x, y),
+		Size = UDim2.fromScale(w, h),
+		BackgroundColor3 = color,
+	}, parent)
+	if round then
+		Theme.make("UICorner", { CornerRadius = UDim.new(round, 0) }, f)
+	end
+	return f
+end
+
+local function darker(c: Color3, f: number): Color3
+	return Color3.new(c.R * f, c.G * f, c.B * f)
+end
+
+-- Retrato do personagem feito de retangulos (mesmas cores da skin 3D do SkinService).
+local function portrait(def: any, parent: Instance, props: { [string]: any }): Frame
+	local box = Theme.frame({ BackgroundTransparency = 1 }, parent)
+	for key, value in props do
+		(box :: any)[key] = value
+	end
+	Theme.make("UIAspectRatioConstraint", { AspectRatio = 0.62, DominantAxis = Enum.DominantAxis.Height }, box)
+	local skin = def.skin or {}
+	local shirt = skin.shirt or def.color
+	local pants = skin.pants or darker(def.color, 0.5)
+	local tone = skin.skinTone or Color3.fromRGB(230, 190, 150)
+	local hatColor = skin.hatColor or shirt
+
+	if skin.cape then
+		rect(box, 0.2, 0.33, 0.6, 0.52, skin.cape, 0.1)
+	end
+	rect(box, 0.31, 0.66, 0.16, 0.3, pants, 0.15)
+	rect(box, 0.53, 0.66, 0.16, 0.3, pants, 0.15)
+	rect(box, 0.27, 0.36, 0.46, 0.34, shirt, 0.12)
+	rect(box, 0.15, 0.37, 0.12, 0.3, darker(shirt, 0.85), 0.4)
+	rect(box, 0.73, 0.37, 0.12, 0.3, darker(shirt, 0.85), 0.4)
+	rect(box, 0.33, 0.13, 0.34, 0.24, tone, 0.2)
+	rect(box, 0.4, 0.22, 0.06, 0.04, Color3.fromRGB(20, 15, 20))
+	rect(box, 0.54, 0.22, 0.06, 0.04, Color3.fromRGB(20, 15, 20))
+
+	local hat = skin.hat
+	if hat == "tricorn" then
+		rect(box, 0.16, 0.12, 0.68, 0.05, hatColor, 0.5)
+		rect(box, 0.31, 0.02, 0.38, 0.11, hatColor, 0.2)
+		rect(box, 0.31, 0.09, 0.38, 0.03, Color3.fromRGB(150, 30, 30))
+	elseif hat == "hood" then
+		rect(box, 0.28, 0.08, 0.44, 0.09, hatColor, 0.4)
+		rect(box, 0.28, 0.1, 0.07, 0.3, hatColor, 0.3)
+		rect(box, 0.65, 0.1, 0.07, 0.3, hatColor, 0.3)
+	elseif hat == "wizard" then
+		rect(box, 0.2, 0.12, 0.6, 0.04, hatColor, 0.5)
+		rect(box, 0.34, 0.06, 0.32, 0.07, hatColor, 0.2)
+		rect(box, 0.39, 0.0, 0.22, 0.07, hatColor, 0.2)
+		rect(box, 0.45, -0.06, 0.12, 0.07, hatColor, 0.3)
+	elseif hat == "bandana" then
+		rect(box, 0.32, 0.15, 0.36, 0.05, hatColor, 0.2)
+		rect(box, 0.66, 0.16, 0.1, 0.06, hatColor, 0.3)
+	end
+	return box
+end
+
+-- Morcego de enfeite (corpo + duas asas que batem).
+type Bat = { root: Frame, left: Frame, right: Frame, x: number, y: number, speed: number, phase: number, scale: number }
+local bats: { Bat } = {}
+
+local function makeBat(parent: Instance, scale: number): Bat
+	local root = Theme.frame({ BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.fromOffset(70 * scale, 30 * scale) }, parent)
+	local color = Color3.fromRGB(20, 10, 25)
+	local left = Theme.frame({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromScale(0.48, 0.32), BackgroundColor3 = color }, root)
+	Theme.make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, left)
+	local right = Theme.frame({ AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromScale(0.48, 0.32), BackgroundColor3 = color }, root)
+	Theme.make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, right)
+	local body = Theme.frame({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromScale(0.22, 0.75), BackgroundColor3 = color }, root)
+	Theme.make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, body)
+	rect(body, 0.18, 0.25, 0.22, 0.14, Color3.fromRGB(255, 50, 60), 0.5)
+	rect(body, 0.6, 0.25, 0.22, 0.14, Color3.fromRGB(255, 50, 60), 0.5)
+	return {
+		root = root,
+		left = left,
+		right = right,
+		x = math.random(),
+		y = 0.1 + math.random() * 0.5,
+		speed = 0.03 + math.random() * 0.05,
+		phase = math.random() * 10,
+		scale = scale,
+	}
+end
+
+local function animateBats(dt: number)
+	local t = os.clock()
+	for _, b in bats do
+		b.x += b.speed * dt
+		if b.x > 1.1 then
+			b.x = -0.1
+			b.y = 0.08 + math.random() * 0.5
+		end
+		local bob = math.sin(t * 2 + b.phase) * 0.02
+		b.root.Position = UDim2.fromScale(b.x, b.y + bob)
+		local flap = math.sin(t * 14 + b.phase) * 28
+		b.left.Rotation = flap
+		b.right.Rotation = -flap
 	end
 end
 
-local function lockText(kind: string, id: string): string
-	local ach = requirement[kind] and requirement[kind][id]
-	if ach then
-		return "🔒 " .. ach.desc
+-- Fundo do titulo: ceu de entardecer, lua, morros e morcegos voando.
+local function buildBackground(parent: Instance)
+	local sky = Theme.frame({ Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1) }, parent)
+	Theme.make("UIGradient", {
+		Rotation = 90,
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(28, 8, 34)),
+			ColorSequenceKeypoint.new(0.55, Color3.fromRGB(110, 30, 45)),
+			ColorSequenceKeypoint.new(0.8, Color3.fromRGB(200, 95, 55)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 15, 20)),
+		}),
+	}, sky)
+	-- lua com brilho
+	local glow = Theme.frame({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.8, 0.2), Size = UDim2.fromScale(0.3, 0.3), BackgroundColor3 = Color3.fromRGB(255, 230, 190), BackgroundTransparency = 0.85 }, sky)
+	Theme.make("UIAspectRatioConstraint", { AspectRatio = 1 }, glow)
+	Theme.make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, glow)
+	local moon = Theme.frame({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.8, 0.2), Size = UDim2.fromScale(0.16, 0.16), BackgroundColor3 = Color3.fromRGB(250, 238, 210) }, sky)
+	Theme.make("UIAspectRatioConstraint", { AspectRatio = 1 }, moon)
+	Theme.make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, moon)
+	-- morros
+	local hill = Color3.fromRGB(22, 10, 18)
+	for i, h in { { 0.15, 0.82, 0.7 }, { 0.6, 0.86, 0.8 }, { 1.0, 0.8, 0.6 } } do
+		local f = Theme.frame({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(h[1], h[2]), Size = UDim2.fromScale(h[3], 0.5), BackgroundColor3 = if i == 2 then darker(hill, 0.7) else hill }, sky)
+		Theme.make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, f)
 	end
-	return "🔒 Bloqueado"
+	rect(sky, 0, 0.9, 1, 0.1, Color3.fromRGB(12, 6, 10))
+	-- morcegos
+	table.clear(bats)
+	for i = 1, 9 do
+		table.insert(bats, makeBat(sky, 0.5 + (i % 3) * 0.35))
+	end
 end
+
+-- ===================== construtores comuns =====================
 
 local function title(text: string, parent: Instance, order: number?): TextLabel
 	return Theme.label(text, {
 		Font = Theme.TitleFont,
-		TextSize = 28,
+		TextSize = 30,
 		TextColor3 = C.gold,
-		Size = UDim2.new(1, 0, 0, 34),
+		Size = UDim2.new(1, 0, 0, 36),
 		LayoutOrder = order or 0,
 	}, parent)
 end
@@ -77,18 +210,132 @@ local function scroller(props: { [string]: any }, parent: Instance): ScrollingFr
 	return s
 end
 
--- ===================== aba JOGAR =====================
+local function go(screen: string)
+	current = screen
+	Lobby.refresh()
+end
 
-local function buildPlay()
+-- Painel central das telas internas: botao Voltar + titulo. Devolve a area de conteudo.
+local function panel(heading: string): Frame
+	local box = Theme.frame({
+		Size = UDim2.fromScale(0.94, 0.86),
+		Position = UDim2.fromScale(0.5, 0.53),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		BackgroundColor3 = C.panel,
+		BackgroundTransparency = 0.05,
+	}, screenRoot)
+	Theme.corner(box, 12)
+	Theme.stroke(box, C.border, 2)
+	Theme.make("UISizeConstraint", { MaxSize = Vector2.new(1120, 680) }, box)
+	local back = Theme.button("‹ Voltar", { Size = UDim2.fromOffset(110, 38), Position = UDim2.fromOffset(12, 12), BackgroundColor3 = C.panel3 }, box)
+	back.Activated:Connect(function()
+		go("title")
+	end)
+	Theme.label(heading, {
+		Font = Theme.TitleFont,
+		TextSize = 34,
+		TextColor3 = C.gold,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		Size = UDim2.new(1, -260, 0, 44),
+		Position = UDim2.fromOffset(130, 8),
+	}, box)
+	local area = Theme.frame({
+		Size = UDim2.new(1, -24, 1, -74),
+		Position = UDim2.fromOffset(12, 62),
+		BackgroundTransparency = 1,
+		ClipsDescendants = true,
+	}, box)
+	return area
+end
+
+-- ===================== tela TITULO =====================
+
+local MENU = {
+	{ id = "select", name = "JOGAR", big = true },
+	{ id = "shop", name = "PowerUps" },
+	{ id = "adventures", name = "Aventuras" },
+	{ id = "achievements", name = "Conquistas" },
+	{ id = "options", name = "Opções" },
+}
+
+local function buildTitle()
+	-- logo
+	local logo = Theme.frame({ BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0.04), Size = UDim2.fromScale(0.8, 0.26) }, screenRoot)
+	Theme.make("UISizeConstraint", { MaxSize = Vector2.new(900, 230) }, logo)
+	local top = Theme.label(GAME_TITLE_TOP, {
+		Font = Theme.TitleFont,
+		TextScaled = true,
+		TextColor3 = C.gold,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		Size = UDim2.fromScale(1, 0.5),
+	}, logo)
+	Theme.make("UIStroke", { Color = Color3.fromRGB(90, 10, 20), Thickness = 4 }, top)
+	local bottom = Theme.label(GAME_TITLE_BOTTOM, {
+		Font = Theme.TitleFont,
+		TextScaled = true,
+		TextColor3 = Color3.fromRGB(255, 240, 220),
+		TextXAlignment = Enum.TextXAlignment.Center,
+		Size = UDim2.fromScale(1, 0.5),
+		Position = UDim2.fromScale(0, 0.48),
+	}, logo)
+	Theme.make("UIStroke", { Color = Color3.fromRGB(120, 15, 30), Thickness = 4 }, bottom)
+
+	-- personagens enfileirados embaixo do logo (como a capa do VS)
+	local lineup = Theme.frame({ BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.fromScale(0.5, 0.97), Size = UDim2.fromScale(0.9, 0.34) }, screenRoot)
+	Theme.make("UISizeConstraint", { MaxSize = Vector2.new(1000, 300) }, lineup)
+	local n = #Config.Classes
+	local slotsLeft = math.ceil(n / 2)
+	for i, def in Config.Classes do
+		-- metade a esquerda do menu, metade a direita
+		local x = if i <= slotsLeft then 0.02 + (i - 1) * 0.15 else 0.98 - (n - i) * 0.15
+		portrait(def, lineup, {
+			AnchorPoint = Vector2.new(if i <= slotsLeft then 0 else 1, 1),
+			Position = UDim2.fromScale(x, 1),
+			Size = UDim2.fromScale(0.2, if i % 2 == 0 then 0.85 else 1),
+		})
+	end
+
+	-- menu
+	local menu = Theme.frame({ BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0.36), Size = UDim2.fromOffset(300, 330) }, screenRoot)
+	Theme.list(menu, false, 10).HorizontalAlignment = Enum.HorizontalAlignment.Center
+	for i, item in MENU do
+		local b = Theme.button(item.name, {
+			LayoutOrder = i,
+			Size = UDim2.new(1, 0, 0, if item.big then 72 else 50),
+			BackgroundColor3 = if item.big then C.accent else C.panel2,
+			BackgroundTransparency = if item.big then 0 else 0.1,
+			Font = if item.big then Theme.TitleFont else Theme.BoldFont,
+			TextSize = if item.big then 40 else 20,
+		}, menu)
+		Theme.stroke(b, if item.big then C.gold else C.border, 2)
+		b.Activated:Connect(function()
+			go(item.id)
+		end)
+	end
+
+	Theme.label("Nome provisório · versão de teste", {
+		TextSize = 12,
+		TextColor3 = C.dim,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -4),
+		Size = UDim2.new(0.5, 0, 0, 16),
+	}, screenRoot)
+end
+
+-- ===================== tela SELECAO (personagem + fase) =====================
+
+local function buildSelect()
 	local p = profile
-	local left = Theme.frame({ Size = UDim2.new(0.56, -6, 1, 0), BackgroundColor3 = C.panel2 }, content)
+	local area = panel("Escolha o personagem")
+
+	local left = Theme.frame({ Size = UDim2.new(0.58, -6, 1, 0), BackgroundColor3 = C.panel2 }, area)
 	Theme.corner(left, 10)
 	Theme.pad(left, 10)
-	title("Classes", left)
-	local grid = scroller({ Size = UDim2.new(1, 0, 1, -40), Position = UDim2.fromOffset(0, 40) }, left)
+	local grid = scroller({ Size = UDim2.fromScale(1, 1) }, left)
 	Theme.make("UIGridLayout", {
-		CellSize = UDim2.fromOffset(150, 120),
-		CellPadding = UDim2.fromOffset(8, 8),
+		CellSize = UDim2.fromOffset(150, 210),
+		CellPadding = UDim2.fromOffset(10, 10),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, grid)
 
@@ -97,24 +344,26 @@ local function buildPlay()
 		local selected = sel.class == def.id
 		local card = Theme.button("", { LayoutOrder = i, BackgroundColor3 = if selected then C.accent else C.panel3 }, grid)
 		if selected then
-			Theme.stroke(card, C.gold, 2)
+			Theme.stroke(card, C.gold, 3)
 		end
-		Theme.frame({ Size = UDim2.new(1, 0, 0, 6), BackgroundColor3 = def.color }, card)
-		Theme.label(def.name, { Font = Theme.BoldFont, TextSize = 17, Size = UDim2.new(1, -12, 0, 24), Position = UDim2.fromOffset(6, 10) }, card)
+		local art = Theme.frame({ Size = UDim2.new(1, -12, 0, 120), Position = UDim2.fromOffset(6, 6), BackgroundColor3 = C.backdrop }, card)
+		Theme.corner(art, 6)
+		portrait(def, art, { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.fromScale(0.5, 1), Size = UDim2.fromScale(1, 0.95) })
+		Theme.label(def.name, { Font = Theme.BoldFont, TextSize = 17, TextXAlignment = Enum.TextXAlignment.Center, Size = UDim2.new(1, -12, 0, 22), Position = UDim2.fromOffset(6, 130) }, card)
 		local weapon = Content.weapons[def.weapon]
-		Theme.label("Arma: " .. (weapon and weapon.name or "?"), { TextSize = 13, TextColor3 = C.dim, Size = UDim2.new(1, -12, 0, 18), Position = UDim2.fromOffset(6, 34) }, card)
+		Theme.label(weapon and weapon.name or "?", { TextSize = 13, TextColor3 = if weapon then weapon.color else C.dim, TextXAlignment = Enum.TextXAlignment.Center, Size = UDim2.new(1, -12, 0, 18), Position = UDim2.fromOffset(6, 152) }, card)
 		local status: string
-		local statusColor = C.text
+		local statusColor = C.dim
 		if info.owned then
-			status = if selected then "✓ Selecionada" else "Selecionar"
+			status = if selected then "✓ Escolhido" else ""
+			statusColor = C.gold
 		elseif info.unlocked then
 			status = ("Comprar · %d ouro"):format(def.price)
 			statusColor = if p.gold >= def.price then C.gold else C.bad
 		else
-			status = lockText("class", def.id)
-			statusColor = C.dim
+			status = "🔒 Bloqueado"
 		end
-		Theme.label(status, { TextSize = 12, TextColor3 = statusColor, Size = UDim2.new(1, -12, 0, 56), Position = UDim2.fromOffset(6, 56), TextYAlignment = Enum.TextYAlignment.Top }, card)
+		Theme.label(status, { TextSize = 13, TextColor3 = statusColor, TextXAlignment = Enum.TextXAlignment.Center, Size = UDim2.new(1, -12, 0, 22), Position = UDim2.fromOffset(6, 178) }, card)
 		card.Activated:Connect(function()
 			if info.owned then
 				sel.class = def.id
@@ -125,20 +374,23 @@ local function buildPlay()
 		end)
 	end
 
-	-- coluna da direita: detalhes, estagio, arcano, JOGAR
-	local right = Theme.frame({ Size = UDim2.new(0.44, -6, 1, 0), Position = UDim2.new(0.56, 6, 0, 0), BackgroundColor3 = C.panel2 }, content)
+	-- direita: detalhes, fase, COMECAR
+	local right = Theme.frame({ Size = UDim2.new(0.42, -6, 1, 0), Position = UDim2.new(0.58, 6, 0, 0), BackgroundColor3 = C.panel2 }, area)
 	Theme.corner(right, 10)
-	Theme.pad(right, 10)
-	local info = scroller({ Size = UDim2.new(1, 0, 1, -66) }, right)
+	Theme.pad(right, 12)
+	local info = scroller({ Size = UDim2.new(1, 0, 1, -70) }, right)
 	Theme.list(info, false, 6)
 
 	local def = Content.classes[sel.class]
 	if def then
 		title(def.name, info, 1)
-		Theme.label(def.desc, { TextSize = 14, TextColor3 = C.dim, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 2 }, info)
+		if def.title then
+			Theme.label(def.title, { TextSize = 14, TextColor3 = C.dim, Size = UDim2.new(1, 0, 0, 18), LayoutOrder = 2 }, info)
+		end
+		Theme.label(def.desc, { TextSize = 15, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 3 }, info)
 		local weapon = Content.weapons[def.weapon]
 		if weapon then
-			Theme.label(("Arma inicial: %s — %s"):format(weapon.name, weapon.desc), { TextSize = 14, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 3 }, info)
+			Theme.label(("Arma inicial: %s — %s"):format(weapon.name, weapon.desc), { TextSize = 14, TextColor3 = weapon.color, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 4 }, info)
 		end
 		local lines = { ("Vida base: %d"):format(def.baseHp) }
 		for key, value in def.stats do
@@ -150,22 +402,19 @@ local function buildPlay()
 		if def.perk then
 			table.insert(lines, def.perk.desc)
 		end
-		Theme.label(table.concat(lines, "\n"), { TextSize = 14, TextColor3 = C.good, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 4 }, info)
+		Theme.label(table.concat(lines, "\n"), { TextSize = 14, TextColor3 = C.good, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 5 }, info)
 	end
 
-	-- estagio
-	Theme.label("Estágio", { Font = Theme.BoldFont, TextSize = 18, Size = UDim2.new(1, 0, 0, 26), LayoutOrder = 10 }, info)
-	local stageRow = Theme.frame({ Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1, LayoutOrder = 11 }, info)
-	Theme.list(stageRow, true, 6)
+	Theme.label("Fase", { Font = Theme.BoldFont, TextSize = 18, Size = UDim2.new(1, 0, 0, 28), LayoutOrder = 10 }, info)
 	for i, stage in Config.Stages do
 		local unlocked = p.stages[stage.id] == true
 		local chosen = sel.stage == stage.id
 		local b = Theme.button(if unlocked then stage.name else "🔒 " .. stage.name, {
-			Size = UDim2.new(0.5, -4, 1, 0),
-			LayoutOrder = i,
-			TextSize = 14,
+			Size = UDim2.new(1, 0, 0, 40),
+			LayoutOrder = 10 + i,
+			TextSize = 16,
 			BackgroundColor3 = if chosen then C.accent elseif unlocked then C.panel3 else C.locked,
-		}, stageRow)
+		}, info)
 		b.Activated:Connect(function()
 			if unlocked then
 				sel.stage = stage.id
@@ -174,64 +423,34 @@ local function buildPlay()
 		end)
 	end
 	local stageDef = Content.stages[sel.stage]
-	local stageText = stageDef and stageDef.desc or ""
-	for _, stage in Config.Stages do
-		if not p.stages[stage.id] then
-			stageText ..= ("\n%s: %s"):format(stage.name, lockText("stage", stage.id))
-		end
+	if stageDef then
+		Theme.label(stageDef.desc, { TextSize = 13, TextColor3 = C.dim, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 40 }, info)
 	end
-	Theme.label(stageText, { TextSize = 13, TextColor3 = C.dim, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 12 }, info)
 
-	-- arcano
-	Theme.label("Arcano", { Font = Theme.BoldFont, TextSize = 18, Size = UDim2.new(1, 0, 0, 26), LayoutOrder = 20 }, info)
-	local arcRow = scroller({ Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 21, AutomaticCanvasSize = Enum.AutomaticSize.X, ScrollingDirection = Enum.ScrollingDirection.X }, info)
-	Theme.list(arcRow, true, 6)
-	local options = { { id = "", name = "Nenhum" } }
-	for _, arc in Config.Arcanas do
-		table.insert(options, arc)
-	end
-	for i, arc in options do
-		local unlocked = arc.id == "" or p.arcanas[arc.id] == true
-		local chosen = sel.arcana == arc.id
-		local b = Theme.button(if unlocked then arc.name else "🔒", {
-			Size = UDim2.fromOffset(if unlocked then 150 else 44, 36),
-			LayoutOrder = i,
-			TextSize = 13,
-			BackgroundColor3 = if chosen then C.accent elseif unlocked then C.panel3 else C.locked,
-		}, arcRow)
-		b.Activated:Connect(function()
-			if unlocked then
-				sel.arcana = arc.id
-				Lobby.refresh()
-			end
-		end)
-	end
-	local arcDef = Content.arcanas[sel.arcana]
-	Theme.label(if arcDef then arcDef.desc else "Sem arcano: regras normais.", { TextSize = 13, TextColor3 = C.dim, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 22 }, info)
-
-	local play = Theme.button("JOGAR", {
-		Size = UDim2.new(1, 0, 0, 56),
-		Position = UDim2.new(0, 0, 1, -56),
+	local play = Theme.button("COMEÇAR", {
+		Size = UDim2.new(1, 0, 0, 60),
+		Position = UDim2.new(0, 0, 1, -60),
 		BackgroundColor3 = C.accent,
 		Font = Theme.TitleFont,
-		TextSize = 34,
+		TextSize = 36,
 	}, right)
 	Theme.stroke(play, C.gold, 2)
 	play.Activated:Connect(function()
-		actions.start({ class = sel.class, stage = sel.stage, arcana = sel.arcana })
+		actions.start({ class = sel.class, stage = sel.stage, arcana = "" })
 	end)
 end
 
--- ===================== aba POWERUPS =====================
+-- ===================== tela POWERUPS =====================
 
 local function buildShop()
 	local p = profile
-	Theme.label(("PowerUps valem para sempre, em todas as classes. Cada compra encarece os próximos em %d%%. O reembolso devolve todo o ouro."):format(math.floor(Config.Meta.PowerUpMarkup * 100 + 0.5)), {
+	local area = panel("PowerUps")
+	Theme.label(("PowerUps valem para sempre, em todos os personagens. Cada compra encarece os próximos em %d%%. O reembolso devolve todo o ouro."):format(math.floor(Config.Meta.PowerUpMarkup * 100 + 0.5)), {
 		TextSize = 14,
 		TextColor3 = C.dim,
 		Size = UDim2.new(1, 0, 0, 40),
-	}, content)
-	local grid = scroller({ Size = UDim2.new(1, 0, 1, -100), Position = UDim2.fromOffset(0, 44) }, content)
+	}, area)
+	local grid = scroller({ Size = UDim2.new(1, 0, 1, -100), Position = UDim2.fromOffset(0, 44) }, area)
 	Theme.make("UIGridLayout", {
 		CellSize = UDim2.fromOffset(200, 140),
 		CellPadding = UDim2.fromOffset(8, 8),
@@ -260,7 +479,7 @@ local function buildShop()
 			end
 		end)
 	end
-	local footer = Theme.frame({ Size = UDim2.new(1, 0, 0, 44), Position = UDim2.new(0, 0, 1, -44), BackgroundTransparency = 1 }, content)
+	local footer = Theme.frame({ Size = UDim2.new(1, 0, 0, 44), Position = UDim2.new(0, 0, 1, -44), BackgroundTransparency = 1 }, area)
 	Theme.label(("Total investido: %d de ouro"):format(p.spent), { TextSize = 15, Size = UDim2.new(0.6, 0, 1, 0) }, footer)
 	local refund = Theme.button("Reembolsar tudo", { Size = UDim2.new(0.3, 0, 1, 0), Position = UDim2.fromScale(0.7, 0), BackgroundColor3 = C.panel3 }, footer)
 	refund.Activated:Connect(function()
@@ -268,7 +487,33 @@ local function buildShop()
 	end)
 end
 
--- ===================== aba CONQUISTAS =====================
+-- ===================== tela AVENTURAS (em breve) =====================
+
+local function comingSoon(area: Frame, heading: string, text: string)
+	local box = Theme.frame({ BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.45), Size = UDim2.fromScale(0.8, 0.5) }, area)
+	Theme.label(heading, {
+		Font = Theme.TitleFont,
+		TextSize = 56,
+		TextColor3 = C.accentHi,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		Size = UDim2.new(1, 0, 0, 70),
+	}, box)
+	Theme.label(text, {
+		TextSize = 16,
+		TextColor3 = C.dim,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		TextYAlignment = Enum.TextYAlignment.Top,
+		Size = UDim2.new(1, 0, 0, 60),
+		Position = UDim2.fromOffset(0, 80),
+	}, box)
+end
+
+local function buildAdventures()
+	local area = panel("Aventuras")
+	comingSoon(area, "Em breve", "Capítulos com regras próprias vão aparecer aqui.")
+end
+
+-- ===================== tela CONQUISTAS =====================
 
 local function buildAchievements()
 	local p = profile
@@ -276,8 +521,12 @@ local function buildAchievements()
 	for _ in p.achievements do
 		done += 1
 	end
-	title(("Conquistas: %d / %d"):format(done, #Config.Achievements), content)
-	local list = scroller({ Size = UDim2.new(1, 0, 1, -40), Position = UDim2.fromOffset(0, 40) }, content)
+	local area = panel(("Conquistas  %d / %d"):format(done, #Config.Achievements))
+	if #Config.Achievements == 0 then
+		comingSoon(area, "Nenhuma ainda", "As conquistas vão aparecer aqui.")
+		return
+	end
+	local list = scroller({ Size = UDim2.fromScale(1, 1) }, area)
 	Theme.list(list, false, 6)
 	for i, ach in Config.Achievements do
 		local got = p.achievements[ach.id] == true
@@ -302,121 +551,60 @@ local function buildAchievements()
 	end
 end
 
--- ===================== aba MISSOES =====================
+-- ===================== tela OPCOES =====================
 
-local function buildQuests()
+local SKIN_OPTIONS = {
+	{ id = "class", name = "Skin do personagem", desc = "Você vira o personagem escolhido (roupa, chapéu e capa dele)." },
+	{ id = "own", name = "Minha skin", desc = "Você joga com o seu próprio avatar do Roblox." },
+}
+
+local function buildOptions()
 	local p = profile
-	title("Missões", content)
-	Theme.label("Sem prazo: complete no seu ritmo e resgate o ouro aqui.", { TextSize = 14, TextColor3 = C.dim, Size = UDim2.new(1, 0, 0, 22), Position = UDim2.fromOffset(0, 34) }, content)
-	local col = Theme.frame({ Size = UDim2.new(0.62, -6, 1, -64), Position = UDim2.fromOffset(0, 62), BackgroundTransparency = 1 }, content)
-	Theme.list(col, false, 8)
-	for i, q in p.quests do
-		local def = Content.quests[q.id]
-		if not def then
-			continue
+	local area = panel("Opções")
+	local col = Theme.frame({ BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0.02), Size = UDim2.new(0.8, 0, 1, -10) }, area)
+	Theme.make("UISizeConstraint", { MaxSize = Vector2.new(640, 2000) }, col)
+	Theme.list(col, false, 10)
+	Theme.label("Aparência", { Font = Theme.BoldFont, TextSize = 20, Size = UDim2.new(1, 0, 0, 28), LayoutOrder = 1 }, col)
+	local currentSkin = (p.settings and p.settings.skin) or Config.Meta.DefaultSkin
+	for i, opt in SKIN_OPTIONS do
+		local chosen = currentSkin == opt.id
+		local b = Theme.button("", {
+			Size = UDim2.new(1, 0, 0, 70),
+			LayoutOrder = 1 + i,
+			BackgroundColor3 = if chosen then C.accent else C.panel2,
+		}, col)
+		if chosen then
+			Theme.stroke(b, C.gold, 2)
 		end
-		local card = Theme.frame({ Size = UDim2.new(1, 0, 0, 96), LayoutOrder = i, BackgroundColor3 = C.panel2 }, col)
-		Theme.corner(card, 8)
-		Theme.pad(card, 10)
-		Theme.label(def.desc, { Font = Theme.BoldFont, TextSize = 16, Size = UDim2.new(0.7, 0, 0, 22) }, card)
-		Theme.label(("+%d ouro"):format(def.reward), { Font = Theme.NumberFont, TextSize = 16, TextColor3 = C.gold, TextXAlignment = Enum.TextXAlignment.Right, Size = UDim2.new(0.3, 0, 0, 22), Position = UDim2.fromScale(0.7, 0) }, card)
-		local _, setBar = Theme.bar({ Size = UDim2.new(0.7, -10, 0, 14), Position = UDim2.fromOffset(0, 34) }, if q.done then C.good else C.xp, card)
-		setBar(q.progress / def.n)
-		Theme.label(("%d / %d"):format(q.progress, def.n), { TextSize = 13, TextColor3 = C.dim, Size = UDim2.new(0.7, 0, 0, 18), Position = UDim2.fromOffset(0, 52) }, card)
-		local claim = Theme.button(if q.done then "Resgatar" else "Em andamento", {
-			Size = UDim2.new(0.28, 0, 0, 34),
-			Position = UDim2.new(0.72, 0, 0, 36),
-			TextSize = 14,
-			BackgroundColor3 = if q.done then C.good else C.locked,
-			AutoButtonColor = q.done,
-		}, card)
-		claim.Activated:Connect(function()
-			if q.done then
-				actions.claimQuest(i)
+		Theme.label((if chosen then "● " else "○ ") .. opt.name, { Font = Theme.BoldFont, TextSize = 18, Size = UDim2.new(1, -24, 0, 26), Position = UDim2.fromOffset(12, 8) }, b)
+		Theme.label(opt.desc, { TextSize = 14, TextColor3 = if chosen then C.text else C.dim, Size = UDim2.new(1, -24, 0, 24), Position = UDim2.fromOffset(12, 36) }, b)
+		b.Activated:Connect(function()
+			if not chosen then
+				actions.setOption("skin", opt.id)
 			end
 		end)
 	end
-
-	local box = Theme.frame({ Size = UDim2.new(0.38, -6, 0, 200), Position = UDim2.new(0.62, 6, 0, 62), BackgroundColor3 = C.panel2 }, content)
-	Theme.corner(box, 8)
-	Theme.pad(box, 12)
-	local s = p.stats
-	Theme.label(
-		("Suas marcas\n\nAbates: %d\nPartidas: %d\nMelhor tempo: %d min\nMelhor nível: %d\nOuro total: %d"):format(s.kills, s.runs, s.bestMinutes, s.bestLevel, s.goldTotal),
-		{ TextSize = 15, Size = UDim2.fromScale(1, 1), TextYAlignment = Enum.TextYAlignment.Top },
-		box
-	)
-end
-
--- ===================== aba AVENTURAS =====================
-
-local function buildAdventures()
-	local p = profile
-	local list = scroller({ Size = UDim2.fromScale(1, 1) }, content)
-	Theme.list(list, false, 10)
-	for i, adv in Config.Adventures do
-		local info = p.adventures[adv.id] or { unlocked = false, done = 0 }
-		local box = Theme.frame({ Size = UDim2.new(1, -10, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = i, BackgroundColor3 = C.panel2 }, list)
-		Theme.corner(box, 10)
-		Theme.pad(box, 10)
-		Theme.list(box, false, 6)
-		title(adv.name, box, 1)
-		Theme.label(adv.desc, { TextSize = 14, TextColor3 = C.dim, Size = UDim2.new(1, 0, 0, 20), LayoutOrder = 2 }, box)
-		if not info.unlocked then
-			Theme.label(lockText("adventure", adv.id), { TextSize = 14, TextColor3 = C.dim, Size = UDim2.new(1, 0, 0, 22), LayoutOrder = 3 }, box)
-			continue
-		end
-		for c, chapter in adv.chapters do
-			local row = Theme.frame({ Size = UDim2.new(1, 0, 0, 64), LayoutOrder = 10 + c, BackgroundColor3 = C.panel3 }, box)
-			Theme.corner(row, 8)
-			Theme.pad(row, 8)
-			local forced = chapter.class and Content.classes[chapter.class]
-			local extra = ("Tempo: %d min"):format(math.floor(chapter.duration / 60))
-			if forced then
-				extra ..= " · Classe: " .. forced.name
-			end
-			if chapter.reward and chapter.reward.gold then
-				extra ..= (" · +%d ouro"):format(chapter.reward.gold)
-			end
-			Theme.label(chapter.name, { Font = Theme.BoldFont, TextSize = 15, Size = UDim2.new(0.7, 0, 0, 20) }, row)
-			Theme.label(chapter.desc .. "  (" .. extra .. ")", { TextSize = 12, TextColor3 = C.dim, Size = UDim2.new(0.7, 0, 0, 28), Position = UDim2.fromOffset(0, 20) }, row)
-			local completed = c <= info.done
-			local playable = c <= info.done + 1
-			local b = Theme.button(if completed then "✓ Jogar de novo" elseif playable then "Jogar" else "🔒", {
-				Size = UDim2.new(0.28, 0, 1, 0),
-				Position = UDim2.fromScale(0.72, 0),
-				TextSize = 14,
-				BackgroundColor3 = if playable and not completed then C.accent elseif playable then C.panel2 else C.locked,
-				AutoButtonColor = playable,
-			}, row)
-			b.Activated:Connect(function()
-				if playable then
-					actions.start({ adventure = adv.id, chapter = c, class = sel.class, arcana = sel.arcana })
-				end
-			end)
-		end
-	end
+	Theme.label("A troca vale na hora, inclusive no meio da partida.", { TextSize = 13, TextColor3 = C.dim, Size = UDim2.new(1, 0, 0, 22), LayoutOrder = 10 }, col)
 end
 
 local BUILDERS: { [string]: () -> () } = {
-	play = buildPlay,
+	title = buildTitle,
+	select = buildSelect,
 	shop = buildShop,
-	achievements = buildAchievements,
-	quests = buildQuests,
 	adventures = buildAdventures,
+	achievements = buildAchievements,
+	options = buildOptions,
 }
 
--- Redesenha a aba atual (barato: so acontece quando o perfil muda ou ao clicar).
+-- Redesenha a tela atual (barato: so acontece quando o perfil muda ou ao clicar).
 function Lobby.refresh()
 	if not profile then
 		return
 	end
 	goldLabel.Text = ("%d de ouro"):format(profile.gold)
-	for id, b in tabButtons do
-		b.BackgroundColor3 = if id == current then C.accent else C.panel3
-	end
-	Theme.clear(content)
-	BUILDERS[current]()
+	Theme.clear(screenRoot)
+	local builder = BUILDERS[current] or buildTitle
+	builder()
 end
 
 local seeded = false
@@ -431,9 +619,8 @@ function Lobby.render(data: any)
 		seeded = true
 		sel.class = data.selected.class
 		sel.stage = data.selected.stage
-		sel.arcana = data.selected.arcana or ""
 	end
-	-- classe que ACABOU de ser comprada vira a selecionada
+	-- personagem que ACABOU de ser comprado vira o escolhido
 	if prev then
 		for id, info in data.classes do
 			local before = prev.classes[id]
@@ -450,14 +637,21 @@ function Lobby.render(data: any)
 	if sel.stage == "" or not data.stages[sel.stage] then
 		sel.stage = data.selected.stage
 	end
-	if sel.arcana ~= "" and not data.arcanas[sel.arcana] then
-		sel.arcana = "" -- arcano que nao esta mais liberado; "" (Nenhum) e sempre valido
-	end
 	Lobby.refresh()
 end
 
 function Lobby.setVisible(on: boolean)
+	if on and not gui.Enabled then
+		current = "title" -- voltando de uma partida: sempre pela capa
+		Lobby.refresh()
+	end
 	gui.Enabled = on
+	if on and not batsConn then
+		batsConn = RunService.Heartbeat:Connect(animateBats)
+	elseif not on and batsConn then
+		batsConn:Disconnect()
+		batsConn = nil
+	end
 end
 
 function Lobby.init(parent: Instance, acts: Actions)
@@ -468,53 +662,20 @@ function Lobby.init(parent: Instance, acts: Actions)
 		IgnoreGuiInset = true,
 		DisplayOrder = 5,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+		Enabled = false,
 	}, parent)
-	local backdrop = Theme.frame({ Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.backdrop, BackgroundTransparency = 0.35 }, gui)
-	local panel = Theme.frame({
-		Size = UDim2.fromScale(0.95, 0.92),
-		Position = UDim2.fromScale(0.5, 0.5),
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		BackgroundColor3 = C.panel,
-	}, backdrop)
-	Theme.corner(panel, 12)
-	Theme.stroke(panel, C.border, 2)
-	Theme.make("UISizeConstraint", { MaxSize = Vector2.new(1120, 720) }, panel)
-
-	local header = Theme.frame({ Size = UDim2.new(1, -24, 0, 54), Position = UDim2.fromOffset(12, 8), BackgroundTransparency = 1 }, panel)
-	Theme.label("BLOXIAN SURVIVORS", { Font = Theme.TitleFont, TextSize = 40, TextColor3 = C.accentHi, Size = UDim2.new(0.65, 0, 1, 0) }, header)
+	buildBackground(gui)
+	screenRoot = Theme.frame({ Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, gui)
 	goldLabel = Theme.label("", {
 		Font = Theme.NumberFont,
 		TextSize = 22,
 		TextColor3 = C.gold,
 		TextXAlignment = Enum.TextXAlignment.Right,
-		Size = UDim2.new(0.35, 0, 1, 0),
-		Position = UDim2.fromScale(0.65, 0),
-	}, header)
-
-	local tabsRow = Theme.frame({ Size = UDim2.new(1, -24, 0, 38), Position = UDim2.fromOffset(12, 66), BackgroundTransparency = 1 }, panel)
-	Theme.list(tabsRow, true, 6)
-	local tabs = {
-		{ id = "play", name = "Jogar" },
-		{ id = "shop", name = "PowerUps" },
-		{ id = "achievements", name = "Conquistas" },
-		{ id = "quests", name = "Missões" },
-		{ id = "adventures", name = "Aventuras" },
-	}
-	for i, tab in tabs do
-		local b = Theme.button(tab.name, { Size = UDim2.new(0.2, -5, 1, 0), LayoutOrder = i, TextSize = 16 }, tabsRow)
-		tabButtons[tab.id] = b
-		b.Activated:Connect(function()
-			current = tab.id
-			Lobby.refresh()
-		end)
-	end
-
-	content = Theme.frame({
-		Size = UDim2.new(1, -24, 1, -124),
-		Position = UDim2.fromOffset(12, 112),
-		BackgroundTransparency = 1,
-		ClipsDescendants = true,
-	}, panel)
+		AnchorPoint = Vector2.new(1, 0),
+		Size = UDim2.fromOffset(240, 30),
+		Position = UDim2.new(1, -16, 0, 10),
+	}, gui)
+	Theme.make("UIStroke", { Color = C.backdrop, Thickness = 2 }, goldLabel)
 end
 
 return Lobby

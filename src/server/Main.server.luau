@@ -17,8 +17,9 @@ local QuestService = require(script.Parent.QuestService)
 local AdventureService = require(script.Parent.AdventureService)
 local RunManager = require(script.Parent.RunManager)
 local MetaService = require(script.Parent.MetaService)
+local SkinService = require(script.Parent.SkinService)
 
-print("[Survivors] Servidor iniciado (porte VS: runs, armas, evolucao, conquistas, missoes, aventuras).")
+print("[Survivors] Servidor iniciado (tela de titulo, 4 personagens, Planicies).")
 
 SaveService.init()
 Arena.init()
@@ -32,14 +33,17 @@ QuestService.init()
 AdventureService.init()
 RunManager.init()
 MetaService.init()
+SkinService.init()
 
 local function onPlayerAdded(player: Player)
+	SkinService.onPlayerAdded(player) -- antes do spawn, para nao perder o CharacterAdded
 	RunManager.onPlayerAdded(player) -- personagem nasce no lobby
 	task.spawn(function()
 		local profile = SaveService.load(player) -- pode esperar o DataStore
 		if player.Parent then
 			QuestService.ensure(profile)
 			MetaService.sync(player)
+			SkinService.refresh(player) -- o perfil chegou: agora sabe qual skin usar
 		end
 	end)
 end
@@ -52,6 +56,7 @@ Players.PlayerAdded:Connect(onPlayerAdded)
 Players.PlayerRemoving:Connect(function(player)
 	RunManager.onPlayerRemoving(player) -- guarda o ouro da run ANTES de salvar
 	SaveService.release(player)
+	SkinService.onPlayerRemoving(player)
 end)
 
 game:BindToClose(function()

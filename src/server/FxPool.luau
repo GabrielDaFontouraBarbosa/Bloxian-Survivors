@@ -73,6 +73,25 @@ local MAKERS: { [string]: () -> Part } = {
 		p.Material = Enum.Material.Neon
 		return p
 	end,
+	-- runa: losango achatado e brilhante (gira no comportamento bounce)
+	rune = function()
+		local p = base()
+		p.Material = Enum.Material.Neon
+		return p
+	end,
+	-- bola de fogo: esfera neon + fogo de particula (o Fire vai junto no pool)
+	fire = function()
+		local p = base()
+		p.Shape = Enum.PartType.Ball
+		p.Material = Enum.Material.Neon
+		local fire = Instance.new("Fire")
+		fire.Size = 3
+		fire.Heat = 0
+		fire.Color = Color3.fromRGB(255, 140, 40)
+		fire.SecondaryColor = Color3.fromRGB(255, 60, 20)
+		fire.Parent = p
+		return p
+	end,
 }
 
 function FxPool.init()
